@@ -133,11 +133,17 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between text-sm text-muted-foreground">
-          <p>&copy; 2026 Dark Empire Holdings. All rights reserved.</p>
-          <div className="flex gap-6 mt-4 md:mt-0 font-mono text-xs">
-            <span>SYSTEM_STATUS: ONLINE</span>
-            <span>LATENCY: 12ms</span>
+        <div className="border-t border-white/10 pt-8 mt-8 flex flex-col md:flex-row items-center justify-between text-sm text-muted-foreground">
+          <p className="font-mono text-xs text-white/50">&copy; {new Date().getFullYear()} Dark Empire Holdings. All rights reserved.</p>
+          <div className="flex gap-6 mt-4 md:mt-0 font-mono text-xs items-center" suppressHydrationWarning>
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              <span className="text-green-400 font-bold tracking-widest">SYSTEM_STATUS: ONLINE</span>
+            </div>
+            <span className="text-primary/70 tracking-widest">LATENCY: 12ms</span>
           </div>
         </div>
       </div>
