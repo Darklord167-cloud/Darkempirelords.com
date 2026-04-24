@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  try {up
-      const body = await req.json();
-          const { message } = body;
+  try {
+    const body = await req.json();
+    const { message } = body;
 
               if (!process.env.OPENAI_API_KEY) {
                     return NextResponse.json({ message: "System error: OpenAI Key missing." }, { status: 500 });
