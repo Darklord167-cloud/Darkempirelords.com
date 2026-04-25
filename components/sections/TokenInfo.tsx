@@ -136,7 +136,7 @@ export function TokenInfo() {
                 <div className="w-2 h-2 rounded-full bg-[#0088cc]" /> Protocol Governance
               </h5>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                DEMP holdings represent verified voting power. Shape the roadmap, allocate the community treasury, and dictate the Empire's future.
+                DEMP holdings represent verified voting power. Shape the roadmap, allocate the community treasury, and dictate the Empire&apos;s future.
               </p>
             </div>
           </div>
