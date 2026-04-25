@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node server.ts",
+    "dev": "next dev",
     "build": "next build",
-    "start": "node server.ts",
+    "start": "next start",
     "lint": "eslint .",
     "clean": "next clean",
     "db:push": "drizzle-kit push"
