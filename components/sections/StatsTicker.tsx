@@ -1,13 +1,50 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useEffect, useState } from "react";
+
+interface BirdeyeData {
+  data?: {
+    price?: number;
+    mc?: number;
+    supply?: number;
+  }
+}
 
 export function StatsTicker() {
+  const [dempData, setDempData] = useState<{ price: string; mc: string }>({ price: "TBA", mc: "TBA" });
+
+  useEffect(() => {
+    const fetchTokenData = async () => {
+      try {
+        const address = "8yGrrj6d9p4WNPRkunVo1NwkRSX3VTo43ZS39xu7jupx";
+        const res = await fetch(`/api/birdeye?address=${address}`);
+        if (!res.ok) return;
+        
+        const json: BirdeyeData = await res.json();
+        
+        if (json.data && typeof json.data.price === 'number') {
+           setDempData({
+             price: `$${json.data.price.toFixed(6)}`,
+             mc: json.data.mc ? `$${(json.data.mc / 1000000).toFixed(2)}M` : "TBA",
+           });
+        }
+      } catch (err) {
+        console.error("Failed to fetch DEMP data", err);
+      }
+    };
+
+    fetchTokenData();
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchTokenData, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   const stats = [
     { label: "CIRCULATING SUPPLY", value: "1,000,000,000 DEMP" },
     { label: "NETWORK", value: "SOLANA" },
-    { label: "DEMP PRICE", value: "TBA" },
-    { label: "MARKET CAP", value: "TBA" },
+    { label: "DEMP PRICE", value: dempData.price },
+    { label: "MARKET CAP", value: dempData.mc },
     { label: "LIQUIDITY STATUS", value: "LOCKED" },
     { label: "CONTRACT STATUS", value: "SOL VERIFIED" },
   ];
@@ -23,7 +60,7 @@ export function StatsTicker() {
           duration: 25,
         }}
       >
-        {[...stats, ...stats].map((stat, i) => (
+        {[...stats, ...stats, ...stats, ...stats].map((stat, i) => (
           <div key={i} className="flex items-center mx-8 gap-3">
             <span className="text-primary font-mono text-xs font-bold tracking-widest opacity-70">
               {stat.label}
