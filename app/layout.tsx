@@ -31,14 +31,18 @@ export const metadata: Metadata = {
     title: 'Dark Empire HQ',
     description: 'Official Headquarters of Dark Empire Holdings. DEMP Token Verification, Products, and Services.',
     type: 'website',
-    images: ['/attached_assets/hero_bg.png'],
+    images: ['/assets/demp-banner.svg'],
   },
   twitter: {
     card: 'summary_large_image',
-    site: '@replit',
     title: 'Dark Empire HQ',
     description: 'Official Headquarters of Dark Empire Holdings. DEMP Token Verification, Products, and Services.',
-    images: ['/attached_assets/hero_bg.png'],
+    images: ['/assets/demp-banner.svg'],
+  },
+  icons: {
+    icon: '/assets/demp-logo.svg',
+    shortcut: '/assets/demp-logo.svg',
+    apple: '/assets/demp-logo.svg',
   },
 };
 

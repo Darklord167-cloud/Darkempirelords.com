@@ -11,16 +11,28 @@ const SUPPLY_ENDPOINT = "https://empire-token-supply.replit.app/api/supply.json"
 export function TokenInfo() {
   const [copiedContract, setCopiedContract] = useState(false);
   const [copiedEndpoint, setCopiedEndpoint] = useState(false);
+  const [copiedIcon, setCopiedIcon] = useState(false);
+  const [copiedBanner, setCopiedBanner] = useState(false);
   const contractAddress = "8yGrrj6d9p4WNPRkunVo1NwkRSX3VTo43ZS39xu7jupx";
   const { toast } = useToast();
+  
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
-  const copy = (text: string, type: "contract" | "endpoint") => {
+  const copy = (text: string, type: "contract" | "endpoint" | "icon" | "banner") => {
     navigator.clipboard.writeText(text);
-    const setter = type === "contract" ? setCopiedContract : setCopiedEndpoint;
+    
+    let setter;
+    switch (type) {
+      case "contract": setter = setCopiedContract; break;
+      case "endpoint": setter = setCopiedEndpoint; break;
+      case "icon": setter = setCopiedIcon; break;
+      case "banner": setter = setCopiedBanner; break;
+    }
+    
     setter(true);
     toast({
-      title: type === "contract" ? "Address Copied" : "Endpoint Copied",
-      description: `${type === "contract" ? "Contract address" : "Supply endpoint"} copied to clipboard`,
+      title: "Copied to clipboard",
+      description: `${type === "contract" ? "Contract address" : type === "endpoint" ? "Supply endpoint" : type === "icon" ? "Icon URL" : "Banner URL"} copied.`
     });
     setTimeout(() => setter(false), 2000);
   };
@@ -91,9 +103,18 @@ export function TokenInfo() {
                 <div className="absolute inset-4 rounded-full border border-secondary/30 animate-[spin_15s_linear_infinite_reverse]" />
                 <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-9xl font-display font-bold text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
-                        D
-                    </div>
+                    <motion.div 
+                      className="relative w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-2 border-primary/50 shadow-[0_0_50px_rgba(168,85,247,0.5)]"
+                      initial={{ rotate: -10 }}
+                      animate={{ rotate: 10 }}
+                      transition={{ duration: 4, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+                    >
+                        <img 
+                          src="/assets/demp-logo.svg" 
+                          alt="DEMP Token Icon"
+                          className="w-full h-full object-cover"
+                        />
+                    </motion.div>
                 </div>
             </div>
           </motion.div>
@@ -273,6 +294,30 @@ export function TokenInfo() {
                     <span className="text-green-400 font-heading font-bold text-lg">LIVE & PUBLIC</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">JSON endpoint accessible 24/7</p>
+                </div>
+              </div>
+
+              <div className="p-5 rounded-lg border border-primary/20 bg-primary/5">
+                <p className="text-sm text-primary/80 mb-4 font-mono">ASSET METADATA (FOR BIRDEYE/DEX)</p>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[10px] text-white/50 uppercase tracking-tighter mb-1">Token Icon URL</p>
+                    <div className="flex gap-2">
+                       <code className="text-[10px] text-primary truncate flex-1 font-mono">{baseUrl}/assets/demp-logo.svg</code>
+                       <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={() => copy(`${baseUrl}/assets/demp-logo.svg`, "icon")}>
+                          {copiedIcon ? <CheckCircle className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />} COPY
+                       </Button>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-white/50 uppercase tracking-tighter mb-1">OG Banner URL</p>
+                    <div className="flex gap-2">
+                       <code className="text-[10px] text-primary truncate flex-1 font-mono">{baseUrl}/assets/demp-banner.svg</code>
+                       <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={() => copy(`${baseUrl}/assets/demp-banner.svg`, "banner")}>
+                          {copiedBanner ? <CheckCircle className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />} COPY
+                       </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
 

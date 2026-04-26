@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { CustomWalletButton } from "@/components/ui/custom-wallet-button";
 
 function XIcon(props: React.ComponentProps<"svg">) {
   return (
@@ -50,8 +50,12 @@ export function Navbar() {
   return (
     <nav className="fixed top-0 w-full z-50 border-b border-white/10 bg-background/80 backdrop-blur-md shadow-[0_4px_30px_rgba(168,85,247,0.05)]">
       <div className="container mx-auto px-6 h-20 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <Shield className="h-8 w-8 text-primary fill-primary/20" />
+        <Link href="/" className="flex items-center gap-3 group">
+          <img 
+            src="/assets/demp-logo.svg" 
+            alt="Dark Empire Logo" 
+            className="h-10 w-10 md:h-12 md:w-12 transition-transform duration-300 group-hover:scale-110"
+          />
           <span className="font-display text-2xl font-bold tracking-widest text-white">
             DARK EMPIRE
           </span>
@@ -73,11 +77,8 @@ export function Navbar() {
               </Link>
             )
           })}
-          {/* Solana Wallet Adapter UI */}
-          <div className="relative group">
-            <div className="absolute -inset-0.5 bg-primary/30 blur-md opacity-50 group-hover:opacity-100 transition rounded-lg"></div>
-            <WalletMultiButton style={{ backgroundColor: 'black', border: '1px solid rgba(168,85,247,0.5)', fontFamily: 'var(--font-orbitron)' }} />
-          </div>
+          {/* Custom Solana Wallet Adapter UI */}
+          <CustomWalletButton />
 
           <Button variant="outline" asChild className="border-primary/50 text-primary hover:bg-primary/20 hover:text-white font-heading font-bold shadow-[0_0_15px_rgba(168,85,247,0.2)]">
             <a href="https://darkempirelords.com" target="_blank" rel="noreferrer">

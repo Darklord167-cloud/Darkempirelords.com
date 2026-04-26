@@ -15,7 +15,8 @@ export function Hero() {
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
           transition={{ duration: 20, repeat: Infinity, repeatType: "reverse" }}
-          className="w-full h-full object-cover bg-[url('https://picsum.photos/seed/darkempireneon/1920/1080?blur=4')] bg-cover bg-center"
+          className="w-full h-full object-cover bg-cover bg-center"
+          style={{ backgroundImage: "url('/assets/demp-banner.svg')" }}
         />
       </div>
 
