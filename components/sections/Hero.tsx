@@ -34,9 +34,19 @@ export function Hero() {
             </span>
           </div>
 
-          <h1 className="font-display text-5xl md:text-7xl lg:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 mb-6 tracking-tight drop-shadow-2xl">
+          <motion.h1 
+            animate={{ 
+              filter: [
+                "drop-shadow(0 0 10px rgba(168, 85, 247, 0.3))", 
+                "drop-shadow(0 0 30px rgba(168, 85, 247, 0.7))", 
+                "drop-shadow(0 0 10px rgba(168, 85, 247, 0.3))"
+              ]
+            }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="font-display text-5xl md:text-7xl lg:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 mb-6 tracking-tight"
+          >
             DARK EMPIRE
-          </h1>
+          </motion.h1>
 
           <p className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground font-light mb-10 leading-relaxed">
             The central command for the next generation of digital sovereignty. 
@@ -44,15 +54,16 @@ export function Hero() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-            <Button size="lg" asChild className="h-14 px-8 text-lg font-heading font-bold tracking-wider bg-primary hover:bg-primary/90 text-white shadow-[0_0_40px_-10px_var(--color-primary)] border border-primary/50 relative overflow-hidden group">
+            <Button size="lg" asChild className="h-14 px-8 text-lg font-heading font-bold tracking-wider bg-primary text-white shadow-[0_0_40px_-10px_var(--color-primary)] border border-primary/50 relative overflow-hidden group hover:shadow-[0_0_60px_-5px_var(--color-primary)] hover:border-primary transition-all duration-300">
               <a href="https://darkempirelords.com" target="_blank" rel="noreferrer">
-                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
-                <span className="relative z-10">ENTER HQ</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-white/20 to-primary/0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-out" />
+                <span className="relative z-10 group-hover:scale-105 transition-transform duration-300 inline-block">ENTER HQ</span>
               </a>
             </Button>
-            <Button size="lg" variant="outline" asChild className="h-14 px-8 text-lg font-heading font-bold tracking-wider border-white/20 text-white hover:bg-white/10 hover:border-white/40 shadow-[0_0_20px_-10px_rgba(255,255,255,0.2)]">
-              <a href="#token">
-                VERIFY ASSETS <ArrowRight className="ml-2 h-5 w-5 text-primary" />
+            <Button size="lg" variant="outline" asChild className="h-14 px-8 text-lg font-heading font-bold tracking-wider border-primary/30 text-white shadow-[0_0_20px_-10px_var(--color-primary)] group hover:bg-primary/10 hover:border-primary hover:shadow-[0_0_30px_-5px_var(--color-primary)] transition-all duration-300">
+              <a href="#token" className="flex items-center">
+                <span className="group-hover:scale-105 transition-transform duration-300 inline-block">VERIFY ASSETS</span>
+                <ArrowRight className="ml-2 h-5 w-5 text-primary group-hover:translate-x-1 transition-transform duration-300" />
               </a>
             </Button>
           </div>

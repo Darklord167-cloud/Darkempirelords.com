@@ -19,9 +19,19 @@ export function StatsTicker() {
       try {
         const address = "8yGrrj6d9p4WNPRkunVo1NwkRSX3VTo43ZS39xu7jupx";
         const res = await fetch(`/api/birdeye?address=${address}`);
-        if (!res.ok) return;
+        if (!res.ok) {
+           console.error("StatsTicker: API responded with status", res.status);
+           return;
+        }
         
-        const json: BirdeyeData = await res.json();
+        const text = await res.text();
+        let json: BirdeyeData;
+        try {
+          json = JSON.parse(text);
+        } catch (e) {
+          console.error("Failed to parse DEMP data. Server responded with:", text.substring(0, 500));
+          return;
+        }
         
         if (json.data && typeof json.data.price === 'number') {
            setDempData({
