@@ -120,6 +120,36 @@ export function TokenInfo() {
           </motion.div>
         </div>
 
+        {/* GeckoTerminal Score Card Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.1 }}
+          className="mt-20 max-w-5xl mx-auto"
+        >
+          <div className="text-center mb-10">
+            <h4 className="text-2xl font-heading font-bold text-white uppercase tracking-wider mb-2">Security & Audit Score</h4>
+            <p className="text-muted-foreground font-mono text-sm max-w-2xl mx-auto">
+              Real-time security analytics provided by GeckoTerminal.
+            </p>
+          </div>
+          
+          <div className="w-full h-[600px] rounded-xl border border-white/10 bg-black/50 backdrop-blur overflow-hidden shadow-[0_0_30px_rgba(168,85,247,0.15)] p-2">
+            <iframe 
+              height="100%" 
+              width="100%" 
+              id="geckoterminal-score-card" 
+              title="GT Score Card" 
+              src="https://www.geckoterminal.com/solana/pools/6Higx2gdaqYaukrkNomp1pVJX8uQNHAhavLE7qFnHjYD/security?size=max&color=dark" 
+              frameBorder="0" 
+              allow="clipboard-write" 
+              allowFullScreen
+              className="rounded-lg"
+            ></iframe>
+          </div>
+        </motion.div>
+
         {/* Tokenomics Section */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}

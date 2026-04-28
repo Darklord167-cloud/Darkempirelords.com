@@ -64,10 +64,15 @@ export function Footer() {
             <p className="text-muted-foreground max-w-sm mb-8 text-lg">
               The central command for next-generation digital sovereignty, powering the ecosystem with DEMP.
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               <Button asChild className="bg-primary hover:bg-primary/80 text-white font-bold tracking-wider shadow-[0_0_20px_-5px_var(--color-primary)] border border-primary/50">
                 <a href="https://darkempirelords.com" target="_blank" rel="noreferrer">
                   <Globe className="mr-2 h-4 w-4" /> OFFICIAL WEBSITE
+                </a>
+              </Button>
+              <Button asChild variant="outline" className="border-primary/50 text-primary hover:bg-primary/20 hover:text-white font-bold tracking-wider">
+                <a href="/whitepaper">
+                  WHITEPAPER
                 </a>
               </Button>
             </div>

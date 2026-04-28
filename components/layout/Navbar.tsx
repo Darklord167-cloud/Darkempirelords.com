@@ -34,6 +34,7 @@ export function Navbar() {
     { name: "Features", href: "/features" },
     { name: "DEMP", href: "/token" },
     { name: "Holdings", href: "/holdings" },
+    { name: "Whitepaper", href: "/whitepaper" },
     { name: "Roadmap", href: "/roadmap" },
     { name: "Oracle", href: "/oracle" },
     { name: "FAQ", href: "/faq" },
@@ -122,6 +123,10 @@ export function Navbar() {
                   </Link>
                 )
               })}
+
+              <div className="pt-4 pb-2 border-b border-white/10">
+                <CustomWalletButton />
+              </div>
 
               <div className="pt-4 mt-2 space-y-3">
                 <p className="text-xs font-mono text-white/30 tracking-widest uppercase">Community</p>

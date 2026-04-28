@@ -137,4 +137,49 @@
   .clip-edges-reverse {
     clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
   }
+
+  /* Oracle Core Animations */
+  @keyframes oracle-breathe {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 20px #8a2be2, 0 0 40px #b026ff, inset 0 0 20px #8a2be2;
+      filter: drop-shadow(0 0 10px #b026ff);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px #8a2be2, 0 0 60px #b026ff, inset 0 0 30px #8a2be2;
+      filter: drop-shadow(0 0 20px #b026ff);
+    }
+  }
+
+  @keyframes oracle-pulse-active {
+    0%, 100% {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px #8a2be2, 0 0 40px #b026ff, 0 0 80px #b026ff, inset 0 0 40px #8a2be2;
+      filter: drop-shadow(0 0 15px #b026ff);
+    }
+    50% {
+      transform: scale(1.15);
+      box-shadow: 0 0 40px #8a2be2, 0 0 80px #b026ff, 0 0 120px #white, inset 0 0 60px #8a2be2;
+      filter: drop-shadow(0 0 30px #b026ff);
+    }
+  }
+
+  .oracle-core {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffe6ff 0%, #b026ff 40%, #1a0033 100%);
+    border: 2px solid #e0b0ff;
+    margin: 0 auto;
+    transition: all 0.3s ease;
+  }
+
+  .oracle-idle {
+    animation: oracle-breathe 4s ease-in-out infinite;
+  }
+
+  .oracle-active {
+    animation: oracle-pulse-active 0.3s ease-in-out infinite;
+  }
 }
