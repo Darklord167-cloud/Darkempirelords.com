@@ -24,7 +24,7 @@ export default function WhitepaperPage() {
           <h2 className="!mt-0 !border-0 text-primary">Executive Summary</h2>
           <p className="text-lg leading-relaxed">
             Dark Empire (DEMP) is a utility and governance token native to the Solana blockchain, designed to serve as the backbone for the overarching Dark Empire decentralized ecosystem.
-            The ecosystem aims to bridge next-generation digital sovereignty, high-performance decentralized finance, and cutting-edge cybersecurity features, providing its community—the "Dark Empire Lords"—with exclusive access, governance rights, and economic incentives.
+            The ecosystem aims to bridge next-generation digital sovereignty, high-performance decentralized finance, and cutting-edge cybersecurity features, providing its community&mdash;the &quot;Dark Empire Lords&quot;&mdash;with exclusive access, governance rights, and economic incentives.
           </p>
         </div>
 
@@ -47,7 +47,7 @@ export default function WhitepaperPage() {
 
         <h2>1. Introduction</h2>
         <p>
-          The transition from Web2 to Web3 has exposed critical flaws in how user data is managed and how value is distributed. Dark Empire is built to address these inefficiencies by creating a vertically integrated ecosystem on Solana. By leveraging Solana's parallel processing capabilities, DEMP offers near-instant transaction finality and fractional transaction costs.
+          The transition from Web2 to Web3 has exposed critical flaws in how user data is managed and how value is distributed. Dark Empire is built to address these inefficiencies by creating a vertically integrated ecosystem on Solana. By leveraging Solana&apos;s parallel processing capabilities, DEMP offers near-instant transaction finality and fractional transaction costs.
         </p>
 
         <h2>2. The DEMP Token</h2>
@@ -98,7 +98,7 @@ export default function WhitepaperPage() {
 
         <h2>4. Architecture & Technology</h2>
         <p>
-          Choosing Solana was a strategic decision. Unlike other blockchains that suffer from network congestion, Solana's Proof of History (PoH) consensus mechanism allows Dark Empire to scale without sacrificing decentralization or security.
+          Choosing Solana was a strategic decision. Unlike other blockchains that suffer from network congestion, Solana&apos;s Proof of History (PoH) consensus mechanism allows Dark Empire to scale without sacrificing decentralization or security.
         </p>
         <p>
           Our smart contracts are written in Rust using the Anchor framework, providing robust memory safety and preventing common vulnerabilities. All contracts undergo rigorous peer review and third-party audits before deployment.
@@ -106,7 +106,7 @@ export default function WhitepaperPage() {
 
         <h2>5. Roadmap</h2>
         <p>
-          Dark Empire's development is broken down into strategic phases designed to build momentum and deliver continuous value to our community.
+          Dark Empire&apos;s development is broken down into strategic phases designed to build momentum and deliver continuous value to our community.
         </p>
         <ul>
           <li><strong>Phase 1: Genesis.</strong> Token Generation Event, Initial DEX Offering (IDO), Core HQ deployment, Community Building.</li>
@@ -120,7 +120,7 @@ export default function WhitepaperPage() {
           Dark Empire is not just another token; it is a movement towards complete user sovereignty in the digital age. By combining a highly engaged community with the unparalleled performance of Solana, DEMP is positioned to become a foundational asset in the decentralized economy. 
         </p>
         <p className="text-center italic mt-12 text-primary font-mono select-none">
-          "Control the core, rule the empire."
+          &quot;Control the core, rule the empire.&quot;
         </p>
       </div>
     </div>

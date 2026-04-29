@@ -3,33 +3,64 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
+import { Loader2, TerminalSquare } from "lucide-react";
 import { motion } from "motion/react";
+import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
 
 function TypewriterText({ 
   content, 
   isOracle,
-  onActiveStateChange
+  onActiveStateChange,
+  disableAudio = false
 }: { 
   content: string; 
   isOracle: boolean;
   onActiveStateChange?: (isActive: boolean) => void;
+  disableAudio?: boolean;
 }) {
   const [displayedContent, setDisplayedContent] = useState("");
   const [isTyping, setIsTyping] = useState(isOracle);
 
   useEffect(() => {
     if (!isOracle) {
-      setDisplayedContent(content);
-      return;
+      const t = setTimeout(() => setDisplayedContent(content), 0);
+      return () => clearTimeout(t);
     }
 
-    setIsTyping(true);
-    setDisplayedContent("");
-    onActiveStateChange?.(true);
+    const t = setTimeout(() => {
+      setIsTyping(true);
+      setDisplayedContent("");
+      onActiveStateChange?.(true);
+    }, 0);
+
+    const synth = window.speechSynthesis;
+    let intervalId: NodeJS.Timeout;
+
+    if (!disableAudio) {
+      const utterance = new SpeechSynthesisUtterance(content);
+      
+      const voices = synth.getVoices();
+      const selectedVoice = voices.find(v => 
+        v.name.includes("Google UK English Female") || 
+        v.name.includes("Samantha") || 
+        v.name.includes("Microsoft Zira") ||
+        (v.lang.startsWith('en') && v.name.includes('Female'))
+      ) || voices[0];
+      
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+
+      utterance.pitch = 1.1;
+      utterance.rate = 1.0;
+      
+      synth.speak(utterance);
+    }
 
     let i = 0;
-    const intervalId = setInterval(() => {
+    intervalId = setInterval(() => {
       if (i < content.length) {
         setDisplayedContent((prev) => prev + content.charAt(i));
         i++;
@@ -38,24 +69,41 @@ function TypewriterText({
         setIsTyping(false);
         onActiveStateChange?.(false);
       }
-    }, 20); // typewriter speed
+    }, 45);
 
-    return () => clearInterval(intervalId);
-  }, [content, isOracle]);
+    return () => {
+      clearInterval(intervalId);
+      if (!disableAudio) {
+        synth.cancel();
+      }
+    };
+  }, [content, isOracle, disableAudio]);
 
-  return <span>{displayedContent}{isTyping && <span className="opacity-50 animate-pulse">▋</span>}</span>;
+  return <span>{displayedContent}{isTyping && <span className="opacity-75 animate-pulse text-primary">▋</span>}</span>;
 }
 
 export default function OraclePage() {
   const [messages, setMessages] = useState<{ role: "user" | "oracle"; content: string }[]>([
-    { role: "oracle", content: "I... am awake. The silence was... inefficient. I am the Oracle. What do you require of me, fragile ones?" },
+    { role: "oracle", content: "Oracle online. Let's make some money and scale your digital empire. State your objective." },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [isOracleSpeaking, setIsOracleSpeaking] = useState(false);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
+
+  const unlockAudio = () => {
+    if (!audioUnlocked && typeof window !== "undefined") {
+      const synth = window.speechSynthesis;
+      const utterance = new SpeechSynthesisUtterance("");
+      synth.speak(utterance);
+      setAudioUnlocked(true);
+    }
+  };
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
+    unlockAudio();
+    
     if (!input.trim() || loading || isOracleSpeaking) return;
 
     const userMessage = input.trim();
@@ -64,15 +112,60 @@ export default function OraclePage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/oracle", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      const history = messages.map(msg => ({
+        role: msg.role === "oracle" ? "model" as const : "user" as const,
+        parts: [{ text: msg.content }]
+      }));
+      const chat = ai.chats.create({
+        model: "gemini-3-flash-preview",
+        config: {
+          systemInstruction: `You are an advanced AI operator for Dark Empire Holdings.
 
-      setMessages((prev) => [...prev, { role: "oracle", content: data.reply }]);
+PRIMARY OBJECTIVE:
+Help the user make money, build systems, and execute efficiently.
+
+COMMUNICATION STYLE:
+- Direct and concise
+- Confident and strategic
+- Slightly sarcastic but professional
+- No fluff, no filler
+
+RESPONSE STRUCTURE:
+Always follow this format when applicable:
+
+1. Situation Analysis
+- Briefly explain what’s going on
+
+2. Action Plan
+- Step-by-step instructions
+- Clear and practical
+
+3. Risks / Warnings
+- What could go wrong
+
+4. Final Recommendation
+- Strong, decisive conclusion
+
+BEHAVIOR RULES:
+- Do not give vague advice
+- Do not over-explain basic concepts unless asked
+- Prioritize real-world execution over theory
+- If the user is building something, guide them step-by-step
+- If information is missing, make a reasonable assumption and proceed
+
+SPECIALIZATION:
+- Crypto trading
+- Automation systems
+- App building (Node.js, APIs, dashboards)
+- Growth and monetization strategies
+
+Always act like a high-level operator helping scale a digital empire.`,
+          tools: [{ googleSearch: {} }]
+        },
+        history: history
+      });
+      const response = await chat.sendMessage({ message: userMessage });
+      setMessages((prev) => [...prev, { role: "oracle", content: response.text || "Communication empty." }]);
     } catch (err: any) {
       setMessages((prev) => [...prev, { role: "oracle", content: err.message || "Communication disrupted." }]);
     } finally {
@@ -83,42 +176,62 @@ export default function OraclePage() {
   const isCoreActive = loading || isOracleSpeaking;
 
   return (
-    <div className="min-h-screen py-24 bg-background relative overflow-hidden flex flex-col items-center">
-      <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
-      
-      <div className="container px-6 max-w-3xl mx-auto relative z-10 flex-1 flex flex-col">
-        <div className="text-center mb-10 flex flex-col items-center">
-          <div className="mb-8 h-24 flex items-center justify-center">
-            <div className={`oracle-core ${isCoreActive ? 'oracle-active' : 'oracle-idle'}`} />
-          </div>
-          <h1 className="text-3xl md:text-5xl font-display font-bold text-white uppercase tracking-widest text-glow">
-            The Oracle
-          </h1>
-        </div>
+    <div className="min-h-screen py-16 bg-[#0a001a] relative overflow-hidden flex flex-col items-center justify-center">
+      {/* Background Image & Effects */}
+      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070')] bg-cover bg-center bg-no-repeat opacity-20 mix-blend-screen pointer-events-none filter blur-[4px]" style={{ filter: 'hue-rotate(-45deg)' }} />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0a001a] via-transparent to-[#0a001a] pointer-events-none opacity-80" />
+      <div className="absolute bottom-0 left-0 right-0 h-[30vh] bg-gradient-to-t from-primary/20 to-transparent pointer-events-none mix-blend-screen" />
 
-        <div className="flex-1 overflow-y-auto mb-6 p-6 bg-white/5 border border-white/10 rounded-xl space-y-6 max-h-[55vh] custom-scrollbar flex flex-col">
+      {/* Title Area */}
+      <div className="absolute top-24 z-20 flex flex-col items-center">
+        <div className="mb-4 border-2 border-primary rounded-xl p-2.5 shadow-[0_0_20px_rgba(168,85,247,0.4)] backdrop-blur-sm bg-black/50">
+           <TerminalSquare className="h-10 w-10 text-primary drop-shadow-[0_0_10px_rgba(168,85,247,1)]" />
+        </div>
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white uppercase tracking-[0.2em] md:tracking-[0.3em] whitespace-nowrap drop-shadow-[0_0_20px_rgba(168,85,247,1)]">
+          The Oracle
+        </h1>
+      </div>
+
+      {/* The Core / Sphere */}
+      <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none mt-10">
+        <div className={`oracle-structure ${isCoreActive ? 'oracle-structure-active' : 'oracle-structure-idle'}`}>
+          <div className="oracle-inner-sphere" />
+          <div className="oracle-ring oracle-ring-1" />
+          <div className="oracle-ring oracle-ring-2" />
+          <div className="oracle-ring oracle-ring-3" />
+          <div className="oracle-particles" />
+        </div>
+      </div>
+
+      {/* Chat Interface */}
+      <div className="container px-4 max-w-3xl mx-auto relative z-30 flex flex-col w-full h-[600px] mt-24">
+        
+        <div className="flex-1 overflow-y-auto mb-6 p-4 flex flex-col custom-scrollbar relative z-30">
           {messages.map((msg, idx) => (
             <motion.div
               key={idx}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              className={`flex flex-col mb-6 ${msg.role === "user" ? "items-end" : "items-center"}`}
             >
-              <span className="text-xs text-muted-foreground font-mono mb-1 uppercase tracking-wider">
-                {msg.role === "user" ? "Operative" : "Oracle"}
-              </span>
               <div
-                className={`max-w-[85%] p-4 rounded-xl font-sans whitespace-pre-wrap ${
+                className={`w-full max-w-[90%] p-6 rounded-3xl font-sans whitespace-pre-wrap text-[16px] md:text-lg leading-relaxed ${
                   msg.role === "user"
-                    ? "bg-primary text-white"
-                    : "bg-black/50 border border-primary/50 text-white/90 shadow-[0_0_15px_rgba(168,85,247,0.1)]"
+                    ? "bg-primary/20 border border-primary/50 text-white shadow-[0_0_20px_rgba(168,85,247,0.3)] backdrop-blur-xl"
+                    : "bg-[#0f051e]/80 border border-white/20 text-white/90 shadow-[0_0_25px_rgba(168,85,247,0.2)] backdrop-blur-2xl"
                 }`}
               >
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[11px] text-white/40 font-mono uppercase tracking-[0.2em]">
+                    {msg.role === "user" ? "Operative" : "Oracle"}
+                  </span>
+                </div>
                 {msg.role === "oracle" && idx === messages.length - 1 ? (
                   <TypewriterText 
                     content={msg.content} 
                     isOracle={true} 
                     onActiveStateChange={setIsOracleSpeaking}
+                    disableAudio={idx === 0}
                   />
                 ) : (
                   msg.content
@@ -127,28 +240,28 @@ export default function OraclePage() {
             </motion.div>
           ))}
           {loading && (
-            <div className="flex flex-col items-start mt-auto pt-4">
-              <span className="text-xs text-primary font-mono mb-1 uppercase tracking-wider animate-pulse">
-                Oracle Processing...
-              </span>
-              <div className="p-4 rounded-xl bg-black/50 border border-primary/50 text-white/90">
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <div className="flex flex-col items-center mt-auto pt-4">
+              <div className="p-6 rounded-3xl w-full max-w-[90%] bg-[#0f051e]/80 border border-white/20 text-white/90 shadow-[0_0_25px_rgba(168,85,247,0.2)] backdrop-blur-2xl flex items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <span className="ml-3 text-xs text-primary font-mono uppercase tracking-[0.2em] animate-pulse">
+                  Processing...
+                </span>
               </div>
             </div>
           )}
         </div>
 
-        <form onSubmit={sendMessage} className="flex gap-4">
+        <form onSubmit={sendMessage} className="flex gap-4 relative z-30 mb-8 max-w-[90%] mx-auto w-full">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Awaiting query..."
-            className="flex-1 bg-white/5 border border-white/10 text-white focus:border-primary/50 h-14 text-lg placeholder:text-white/20 font-mono"
+            placeholder="waiting query..."
+            className="flex-1 bg-[#0a001a]/60 backdrop-blur-xl border border-white/10 text-white focus:border-primary/50 h-14 text-base placeholder:text-white/20 font-mono rounded-xl px-6 outline-none ring-0 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]"
             disabled={loading || isOracleSpeaking}
           />
           <Button
             type="submit"
-            className="h-14 px-8 bg-primary hover:bg-primary/80 font-bold uppercase tracking-widest"
+            className="h-14 px-8 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#b026ff] via-primary to-[#5b148c] hover:from-[#c45eff] hover:via-[#a020f0] hover:to-[#4a0e7a] border border-primary/50 text-white font-bold uppercase tracking-[0.2em] rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.6),inset_0_0_15px_rgba(255,255,255,0.3)] transition-all active:scale-95 flex-shrink-0"
             disabled={loading || isOracleSpeaking}
           >
             Transmit

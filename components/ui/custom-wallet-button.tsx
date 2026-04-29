@@ -4,6 +4,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Button } from "./button";
 import { Wallet, LogOut, ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +15,27 @@ import {
 export function CustomWalletButton() {
   const { publicKey, wallet, disconnect } = useWallet();
   const { setVisible } = useWalletModal();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // Avoid synchronous state updates immediately on mount for strict mode constraints
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="relative group">
+        <Button 
+          disabled
+          className="relative bg-black border border-primary/50 text-white font-heading font-bold rounded-lg"
+        >
+          <Wallet className="w-4 h-4 mr-2 text-primary" />
+          LOADING...
+        </Button>
+      </div>
+    );
+  }
 
   if (!wallet || !publicKey) {
     return (
@@ -36,17 +58,14 @@ export function CustomWalletButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="relative group">
-          <div className="absolute -inset-0.5 bg-primary/30 blur-md opacity-50 group-hover:opacity-100 transition rounded-lg"></div>
-          <Button 
-            variant="outline" 
-            className="relative bg-black border-primary/50 text-primary hover:bg-primary/20 hover:text-white font-heading font-medium tracking-wide"
-          >
-            <img src={wallet.adapter.icon} alt={name} className="w-4 h-4 mr-2 rounded-full" />
-            {base58.slice(0, 4)}..{base58.slice(-4)}
-            <ChevronDown className="w-4 h-4 ml-2 opacity-50" />
-          </Button>
-        </div>
+        <Button 
+          variant="outline" 
+          className="relative bg-black border-primary/50 text-primary hover:bg-primary/20 hover:text-white font-heading font-medium tracking-wide"
+        >
+          <img src={wallet.adapter.icon} alt={name} className="w-4 h-4 mr-2 rounded-full" />
+          {base58.slice(0, 4)}..{base58.slice(-4)}
+          <ChevronDown className="w-4 h-4 ml-2 opacity-50" />
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-black/90 border-primary/20 backdrop-blur-md">
         <DropdownMenuItem 
