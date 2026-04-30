@@ -3,9 +3,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, TerminalSquare } from "lucide-react";
+import { Loader2, TerminalSquare, Coins } from "lucide-react";
 import { motion } from "motion/react";
 import { GoogleGenAI } from "@google/genai";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { toast } from "sonner";
+import Link from "next/link";
 
 const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
 
@@ -83,6 +86,8 @@ function TypewriterText({
 }
 
 export default function OraclePage() {
+  const { publicKey, connected } = useWallet();
+  const [profile, setProfile] = useState<any>(null);
   const [messages, setMessages] = useState<{ role: "user" | "oracle"; content: string }[]>([
     { role: "oracle", content: "Oracle online. Let's make some money and scale your digital empire. State your objective." },
   ]);
@@ -90,6 +95,32 @@ export default function OraclePage() {
   const [loading, setLoading] = useState(false);
   const [isOracleSpeaking, setIsOracleSpeaking] = useState(false);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletAddress: publicKey?.toBase58() }),
+      });
+      const data = await res.json();
+      setProfile(data);
+    } catch (err) {
+      console.error("Failed to fetch profile", err);
+    }
+  };
+
+  useEffect(() => {
+    const load = async () => {
+      if (connected && publicKey) {
+        await fetchProfile();
+      } else {
+        setProfile(null);
+      }
+    };
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected, publicKey]);
 
   const unlockAudio = () => {
     if (!audioUnlocked && typeof window !== "undefined") {
@@ -106,12 +137,37 @@ export default function OraclePage() {
     
     if (!input.trim() || loading || isOracleSpeaking) return;
 
+    if (!connected || !publicKey) {
+      toast.error("You must connect your wallet to interact with the Oracle.");
+      return;
+    }
+
+    if (!profile || profile.credits <= 0) {
+      toast.error("Insufficient credits. Purchase more in the Credits section.");
+      return;
+    }
+
     const userMessage = input.trim();
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setInput("");
     setLoading(true);
 
     try {
+      // Deduct credit first
+      const deductRes = await fetch("/api/user/credits/deduct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletAddress: publicKey.toBase58() }),
+      });
+      
+      const deductData = await deductRes.json();
+      if (!deductRes.ok) {
+        throw new Error(deductData.message || "Failed to deduct credits");
+      }
+      
+      // Update local profile state
+      setProfile((prev: any) => ({ ...prev, credits: deductData.credits }));
+
       const history = messages.map(msg => ({
         role: msg.role === "oracle" ? "model" as const : "user" as const,
         parts: [{ text: msg.content }]
@@ -184,6 +240,19 @@ Always act like a high-level operator helping scale a digital empire.`,
 
       {/* Title Area */}
       <div className="absolute top-24 z-20 flex flex-col items-center">
+        <div className="flex items-center gap-4 mb-2">
+          {connected && profile && (
+            <Link href="/credits">
+              <motion.div 
+                whileHover={{ scale: 1.05 }}
+                className="flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-2 rounded-full cursor-pointer hover:bg-primary/20 transition-all"
+              >
+                <Coins className="w-4 h-4 text-primary" />
+                <span className="text-xs font-bold font-orbitron">{profile.credits} CREDITS</span>
+              </motion.div>
+            </Link>
+          )}
+        </div>
         <div className="mb-4 border-2 border-primary rounded-xl p-2.5 shadow-[0_0_20px_rgba(168,85,247,0.4)] backdrop-blur-sm bg-black/50">
            <TerminalSquare className="h-10 w-10 text-primary drop-shadow-[0_0_10px_rgba(168,85,247,1)]" />
         </div>

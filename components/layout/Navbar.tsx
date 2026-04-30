@@ -37,6 +37,7 @@ export function Navbar() {
     { name: "Whitepaper", href: "/whitepaper" },
     { name: "Roadmap", href: "/roadmap" },
     { name: "Oracle", href: "/oracle" },
+    { name: "Credits", href: "/credits" },
     { name: "FAQ", href: "/faq" },
     { name: "Contact", href: "/contact" },
   ];
