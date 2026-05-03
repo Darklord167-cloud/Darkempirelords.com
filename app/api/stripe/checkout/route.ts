@@ -16,6 +16,22 @@ export async function POST(req: Request) {
       );
     }
 
+    // Validate and check credit mapping
+    const CREDIT_MAP: Record<number, number> = {
+      10: 100,
+      40: 500,
+      75: 1000,
+    };
+
+    if (!CREDIT_MAP[amount]) {
+      return NextResponse.json(
+        { message: "Invalid payment amount" },
+        { status: 400 }
+      );
+    }
+
+    const creditsToAward = CREDIT_MAP[amount];
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
@@ -23,7 +39,7 @@ export async function POST(req: Request) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: "Dark Empire Credits",
+              name: `${creditsToAward} Dark Empire Credits`,
               description: `Credits for wallet: ${walletAddress}`,
             },
             unit_amount: amount * 100, // Amount in cents
@@ -34,7 +50,7 @@ export async function POST(req: Request) {
       mode: "payment",
       metadata: {
         walletAddress,
-        credits: amount.toString(),
+        credits: creditsToAward.toString(),
       },
       success_url: successUrl || `${req.headers.get("origin")}/credits?success=true`,
       cancel_url: cancelUrl || `${req.headers.get("origin")}/credits?canceled=true`,

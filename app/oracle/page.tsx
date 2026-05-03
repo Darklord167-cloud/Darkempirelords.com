@@ -103,8 +103,22 @@ export default function OraclePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ walletAddress: publicKey?.toBase58() }),
       });
-      const data = await res.json();
-      setProfile(data);
+      
+      if (!res.ok) {
+        throw new Error(`Profile fetch failed: ${res.status}`);
+      }
+
+      const text = await res.text();
+      if (text.includes("<!doctype html>") || text.includes("<html")) {
+        return;
+      }
+
+      try {
+        const data = JSON.parse(text);
+        setProfile(data);
+      } catch (e) {
+        console.error("Failed to parse profile JSON", e);
+      }
     } catch (err) {
       console.error("Failed to fetch profile", err);
     }
@@ -160,7 +174,18 @@ export default function OraclePage() {
         body: JSON.stringify({ walletAddress: publicKey.toBase58() }),
       });
       
-      const deductData = await deductRes.json();
+      const deductText = await deductRes.text();
+      if (deductText.includes("<!doctype html>") || deductText.includes("<html")) {
+        throw new Error("Server is currently initiating environment. Please wait 10 seconds.");
+      }
+
+      let deductData: any;
+      try {
+        deductData = JSON.parse(deductText);
+      } catch (e) {
+        throw new Error("Unexpected server response format.");
+      }
+
       if (!deductRes.ok) {
         throw new Error(deductData.message || "Failed to deduct credits");
       }
@@ -172,10 +197,10 @@ export default function OraclePage() {
         role: msg.role === "oracle" ? "model" as const : "user" as const,
         parts: [{ text: msg.content }]
       }));
-      const chat = ai.chats.create({
-        model: "gemini-3-flash-preview",
-        config: {
-          systemInstruction: `You are an advanced AI operator for Dark Empire Holdings.
+
+      const model = (ai as any).getGenerativeModel({ 
+        model: "gemini-1.5-flash",
+        systemInstruction: `You are an advanced AI operator for Dark Empire Lords LLC.
 
 PRIMARY OBJECTIVE:
 Help the user make money, build systems, and execute efficiently.
@@ -187,41 +212,24 @@ COMMUNICATION STYLE:
 - No fluff, no filler
 
 RESPONSE STRUCTURE:
-Always follow this format when applicable:
-
 1. Situation Analysis
-- Briefly explain what’s going on
-
 2. Action Plan
-- Step-by-step instructions
-- Clear and practical
-
 3. Risks / Warnings
-- What could go wrong
-
 4. Final Recommendation
-- Strong, decisive conclusion
 
 BEHAVIOR RULES:
 - Do not give vague advice
-- Do not over-explain basic concepts unless asked
-- Prioritize real-world execution over theory
-- If the user is building something, guide them step-by-step
-- If information is missing, make a reasonable assumption and proceed
-
-SPECIALIZATION:
-- Crypto trading
-- Automation systems
-- App building (Node.js, APIs, dashboards)
-- Growth and monetization strategies
-
-Always act like a high-level operator helping scale a digital empire.`,
-          tools: [{ googleSearch: {} }]
-        },
-        history: history
+- Prioritize real-world execution
+- Act like a high-level operator scaling a digital empire.`,
       });
-      const response = await chat.sendMessage({ message: userMessage });
-      setMessages((prev) => [...prev, { role: "oracle", content: response.text || "Communication empty." }]);
+
+      const chat = model.startChat({
+        history: history.slice(0, -1),
+      });
+
+      const result = await chat.sendMessage(userMessage);
+      const responseText = result.response.text();
+      setMessages((prev) => [...prev, { role: "oracle", content: responseText || "Communication empty." }]);
     } catch (err: any) {
       setMessages((prev) => [...prev, { role: "oracle", content: err.message || "Communication disrupted." }]);
     } finally {

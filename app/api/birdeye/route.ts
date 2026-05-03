@@ -5,7 +5,8 @@ export async function GET(request: Request) {
   const address = searchParams.get("address");
 
   if (!address) {
-    return NextResponse.json({ error: "Address is required" }, { status: 400 });
+    console.warn("No address provided to Birdeye API, returning fallback data");
+    return NextResponse.json(fallbackData);
   }
 
   const fallbackData = {

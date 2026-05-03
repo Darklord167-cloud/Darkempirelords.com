@@ -15,10 +15,10 @@ interface FaqItem {
 
 const faqs: FaqItem[] = [
   {
-    question: "Where can I verify the DEMP Token contract?",
+    question: "Where can I verify the $DEMP Token contract?",
     answer: (
       <>
-        The official DEMP token contract on Solana is <code className="text-primary font-mono text-sm bg-primary/10 px-1 rounded">{CONTRACT}</code>. You can verify this directly on{" "}
+        The official $DEMP token contract on Solana is <code className="text-primary font-mono text-sm bg-primary/10 px-1 rounded">{CONTRACT}</code>. You can verify this directly on{" "}
         <a href={SOLSCAN_URL} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
           Solscan <ExternalLink className="h-3 w-3" />
         </a>{" "}
@@ -30,7 +30,7 @@ const faqs: FaqItem[] = [
     question: "How do you ensure circulating supply transparency?",
     answer: (
       <>
-        The total circulating supply of DEMP is 1,000,000,000 tokens. We maintain a public JSON endpoint at{" "}
+        The total circulating supply of $DEMP is 1,000,000,000 tokens. We maintain a public JSON endpoint at{" "}
         <a href={SUPPLY_ENDPOINT} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1 break-all">
           {SUPPLY_ENDPOINT} <ExternalLink className="h-3 w-3 shrink-0" />
         </a>{" "}
@@ -40,15 +40,15 @@ const faqs: FaqItem[] = [
   },
   {
     question: "What are the plans for the Dark Empire Wallet?",
-    answer: "The Dark Empire Proprietary Wallet is currently in closed beta. It focuses on multi-signature security, direct DEMP integration, and will feature native stealth addresses for enhanced privacy during ecosystem transactions.",
+    answer: "The Dark Empire Proprietary Wallet is currently in closed beta. It focuses on multi-signature security, direct $DEMP integration, and will feature native stealth addresses for enhanced privacy during ecosystem transactions.",
   },
   {
     question: "How does Dark Empire integrate with Google Cloud, Azure, and Squarespace?",
-    answer: "We employ a hybrid Web2.5 infrastructure. Google Cloud and Azure power our high-frequency trading nodes and decentralized API endpoints for maximum uptime. Meanwhile, our Squarespace integration allows traditional e-commerce merchants to accept DEMP seamlessly via our custom payment gateway plugins.",
+    answer: "We employ a hybrid Web2.5 infrastructure. Google Cloud and Azure power our high-frequency trading nodes and decentralized API endpoints for maximum uptime. Meanwhile, our Squarespace integration allows traditional e-commerce merchants to accept $DEMP seamlessly via our custom payment gateway plugins.",
   },
   {
-    question: "What is the difference between DarkCoin and DEMP?",
-    answer: "DarkCoin serves as the Empire's treasury reserve and primary store of value with deflationary tokenomics. DEMP is our utility token used for operational transactions, governance, fee payments, and accessing premium tools within the ecosystem.",
+    question: "What is the difference between DarkCoin and $DEMP?",
+    answer: "DarkCoin serves as the Empire's treasury reserve and primary store of value with deflationary tokenomics. $DEMP is our utility token used for operational transactions, governance, fee payments, and accessing premium tools within the ecosystem.",
   },
   {
     question: "Where can I find verification links and public supply data?",
@@ -57,7 +57,7 @@ const faqs: FaqItem[] = [
         All verification assets are consolidated on this HQ dashboard. The Token section displays the verified Solana contract address with a one-click copy button and a direct link to{" "}
         <a href={SOLSCAN_URL} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
           Solscan <ExternalLink className="h-3 w-3" />
-        </a>. Directly below, the Supply Transparency panel shows the circulating supply of 1,000,000,000 DEMP and provides the official public JSON endpoint with copy and external-link buttons.
+        </a>. Directly below, the Supply Transparency panel shows the circulating supply of 1,000,000,000 $DEMP and provides the official public JSON endpoint with copy and external-link buttons.
       </>
     ),
   },

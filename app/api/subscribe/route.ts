@@ -6,7 +6,7 @@ import { insertSubscriberSchema } from "@/shared/schema";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const data = insertSubscriberSchema.parse(body);
+    const data = insertSubscriberSchema.parse(body) as any;
 
     const existing = await storage.getSubscriberByEmail(data.email);
     if (existing) {

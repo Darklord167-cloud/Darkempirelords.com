@@ -33,12 +33,17 @@ export const contactMessages = pgTable("contact_messages", {
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  walletAddress: true,
+  credits: true,
+}).extend({
+  username: z.string().min(3).max(50),
+  walletAddress: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, "Invalid Solana address").optional(),
 });
 
 export const insertSubscriberSchema = createInsertSchema(subscribers).pick({
   email: true,
 }).extend({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string().email("Please enter a valid email address").max(100),
 });
 
 export const insertContactMessageSchema = createInsertSchema(contactMessages).pick({
@@ -47,10 +52,10 @@ export const insertContactMessageSchema = createInsertSchema(contactMessages).pi
   subject: true,
   message: true,
 }).extend({
-  email: z.string().email("Please enter a valid email address"),
-  name: z.string().min(1, "Name is required"),
-  subject: z.string().min(1, "Subject is required"),
-  message: z.string().min(1, "Message is required"),
+  email: z.string().email("Please enter a valid email address").max(100),
+  name: z.string().min(1, "Name is required").max(100),
+  subject: z.string().min(1, "Subject is required").max(200),
+  message: z.string().min(1, "Message is required").max(5000),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

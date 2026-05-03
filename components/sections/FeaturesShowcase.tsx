@@ -57,7 +57,7 @@ export function FeaturesShowcase() {
             </div>
           </motion.div>
 
-          {/* DEMP Card */}
+          {/* $DEMP Card */}
           <motion.div 
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -70,7 +70,7 @@ export function FeaturesShowcase() {
                 <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center border border-primary/50 shadow-[0_0_15px_rgba(168,85,247,0.5)]">
                   <Zap className="text-primary w-6 h-6" />
                 </div>
-                <h4 className="text-3xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-white">DEMP Token</h4>
+                <h4 className="text-3xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-white">$DEMP Token</h4>
               </div>
               <p className="text-white/70 mb-8 leading-relaxed text-lg">
                 The high-velocity utility and operational token. Powers transactions, platform fees, and daily interactions within the HQ.

@@ -19,7 +19,9 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json(user);
+    // Sanitize response
+    const { id, password, stripeCustomerId, ...safeUser } = user;
+    return NextResponse.json(safeUser);
   } catch (err: any) {
     return NextResponse.json({ message: err.message }, { status: 500 });
   }

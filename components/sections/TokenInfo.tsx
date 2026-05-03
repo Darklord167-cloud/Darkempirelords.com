@@ -51,11 +51,11 @@ export function TokenInfo() {
           >
             <h2 className="text-primary font-mono tracking-widest text-sm mb-4">{"///"} ASSET VERIFICATION</h2>
             <h3 className="text-4xl md:text-5xl font-display font-bold text-white mb-6">
-              THE DEMP TOKEN
+              THE $DEMP TOKEN
             </h3>
             <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
               The native utility token of the Dark Empire ecosystem.
-              Hold DEMP to access premium features, voting rights in the DAO,
+              Hold $DEMP to access premium features, voting rights in the DAO,
               and exclusive drops from our holdings.
             </p>
 
@@ -111,7 +111,7 @@ export function TokenInfo() {
                     >
                         <img 
                           src="/assets/demp-logo.svg" 
-                          alt="DEMP Token Icon"
+                          alt="$DEMP Token Icon"
                           className="w-full h-full object-cover"
                         />
                     </motion.div>
@@ -171,7 +171,7 @@ export function TokenInfo() {
                 <div className="w-2 h-2 rounded-full bg-primary" /> Staking Rewards
               </h5>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Vault your DEMP to earn passive yield. Staking periods multiply your APR and grant proportional shares of ecosystem transaction fees.
+                Vault your $DEMP to earn passive yield. Staking periods multiply your APR and grant proportional shares of ecosystem transaction fees.
               </p>
             </div>
             <div className="p-6 rounded-xl border border-white/10 bg-black/50 backdrop-blur hover:border-red-500/50 transition-colors">
@@ -179,7 +179,7 @@ export function TokenInfo() {
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" /> Deflationary Burns
               </h5>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                2% of all platform service fees are systematically burned, permanently removing DEMP from circulation and increasing scarcity over time.
+                2% of all platform service fees are systematically burned, permanently removing $DEMP from circulation and increasing scarcity over time.
               </p>
             </div>
             <div className="p-6 rounded-xl border border-white/10 bg-black/50 backdrop-blur hover:border-[#0088cc]/50 transition-colors">
@@ -187,7 +187,7 @@ export function TokenInfo() {
                 <div className="w-2 h-2 rounded-full bg-[#0088cc]" /> Protocol Governance
               </h5>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                DEMP holdings represent verified voting power. Shape the roadmap, allocate the community treasury, and dictate the Empire&apos;s future.
+                $DEMP holdings represent verified voting power. Shape the roadmap, allocate the community treasury, and dictate the Empire&apos;s future.
               </p>
             </div>
           </div>
@@ -209,7 +209,7 @@ export function TokenInfo() {
                     DAO GOVERNANCE
                   </h3>
                   <p className="text-muted-foreground mb-6 leading-relaxed">
-                    The Dark Empire is ruled by its citizens. DEMP token holders wield direct influence over the protocol through on-chain proposals and secure voting mechanisms.
+                    The Dark Empire is ruled by its citizens. $DEMP token holders wield direct influence over the protocol through on-chain proposals and secure voting mechanisms.
                   </p>
                   
                   <div className="space-y-6">
@@ -219,7 +219,7 @@ export function TokenInfo() {
                       </div>
                       <div>
                         <h5 className="text-white font-bold mb-1">Proposal Submission</h5>
-                        <p className="text-sm text-muted-foreground">Any citizen holding a minimum threshold of DEMP can submit a Dark Proposal detailing protocol upgrades or treasury allocations.</p>
+                        <p className="text-sm text-muted-foreground">Any citizen holding a minimum threshold of $DEMP can submit a Dark Proposal detailing protocol upgrades or treasury allocations.</p>
                       </div>
                     </div>
                     
@@ -229,7 +229,7 @@ export function TokenInfo() {
                       </div>
                       <div>
                         <h5 className="text-white font-bold mb-1">On-Chain Voting</h5>
-                        <p className="text-sm text-muted-foreground">Votes correspond to held DEMP across connected wallets. Engage your tokens securely over Solana to cast your ballot.</p>
+                        <p className="text-sm text-muted-foreground">Votes correspond to held $DEMP across connected wallets. Engage your tokens securely over Solana to cast your ballot.</p>
                       </div>
                     </div>
 
@@ -254,7 +254,7 @@ export function TokenInfo() {
                     </div>
                     
                     <h5 className="text-xl font-bold text-white mb-2">Liquidity Pool Expansion Phase 2</h5>
-                    <p className="text-sm text-muted-foreground mb-6">Allocate 5% of treasury funds to pair DEMP alongside USDC on major Solana DEXs to stabilize price volatility.</p>
+                    <p className="text-sm text-muted-foreground mb-6">Allocate 5% of treasury funds to pair $DEMP alongside USDC on major Solana DEXs to stabilize price volatility.</p>
                     
                     <div className="space-y-4 mb-6">
                       <div>
@@ -315,7 +315,7 @@ export function TokenInfo() {
                   <p className="text-3xl font-display font-bold text-white" data-testid="text-circulating-supply">
                     1,000,000,000
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">DEMP Tokens</p>
+                  <p className="text-sm text-muted-foreground mt-1">$DEMP Tokens</p>
                 </div>
                 <div className="p-5 rounded-lg border border-white/10 bg-white/5">
                   <p className="text-sm text-white/50 font-mono mb-1">VERIFICATION STATUS</p>

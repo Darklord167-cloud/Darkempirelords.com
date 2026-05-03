@@ -26,17 +26,17 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: 'Dark Empire HQ',
-  description: 'Official Headquarters of Dark Empire Holdings. DEMP Token Verification, Products, and Services.',
+  description: 'Official Headquarters of Dark Empire Lords LLC. $DEMP Token Verification, Products, and Services.',
   openGraph: {
     title: 'Dark Empire HQ',
-    description: 'Official Headquarters of Dark Empire Holdings. DEMP Token Verification, Products, and Services.',
+    description: 'Official Headquarters of Dark Empire Lords LLC. $DEMP Token Verification, Products, and Services.',
     type: 'website',
     images: ['/assets/demp-banner.svg'],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Dark Empire HQ',
-    description: 'Official Headquarters of Dark Empire Holdings. DEMP Token Verification, Products, and Services.',
+    description: 'Official Headquarters of Dark Empire Lords LLC. $DEMP Token Verification, Products, and Services.',
     images: ['/assets/demp-banner.svg'],
   },
   icons: {

@@ -10,6 +10,8 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { useMemo } from "react";
 import '@solana/wallet-adapter-react-ui/styles.css';
 
+import { AuthProvider } from "@/lib/auth-context";
+
 export function Providers({ children }: { children: React.ReactNode }) {
   // Direct connection to the Solana Mainnet
   const endpoint = "https://api.mainnet-beta.solana.com";
@@ -22,9 +24,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <WalletModalProvider>
           <QueryClientProvider client={queryClient}>
             <TooltipProvider>
-              {children}
-              <Toaster />
-              <SonnerToaster position="top-right" theme="dark" richColors />
+              <AuthProvider>
+                {children}
+                <Toaster />
+                <SonnerToaster position="top-right" theme="dark" richColors />
+              </AuthProvider>
             </TooltipProvider>
           </QueryClientProvider>
         </WalletModalProvider>

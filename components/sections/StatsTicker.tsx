@@ -25,11 +25,19 @@ export function StatsTicker() {
         }
         
         const text = await res.text();
+        if (!text || text.includes("<!doctype html>") || text.includes("<html")) {
+          // This is a standby or error page, not JSON. Silently return.
+          return;
+        }
+
         let json: BirdeyeData;
         try {
+          if (!text.trim().startsWith("{")) {
+             throw new Error("Response is not JSON: " + text.substring(0, 50));
+          }
           json = JSON.parse(text);
-        } catch (e) {
-          console.error("Failed to parse DEMP data. Server responded with:", text.substring(0, 500));
+        } catch (e: any) {
+          console.warn("StatsTicker: Failed to parse Birdeye JSON", e.message);
           return;
         }
         
@@ -39,8 +47,8 @@ export function StatsTicker() {
              mc: json.data.mc ? `$${(json.data.mc / 1000000).toFixed(2)}M` : "TBA",
            });
         }
-      } catch (err) {
-        console.error("Failed to fetch DEMP data", err);
+      } catch (err: any) {
+        console.error("Failed to fetch $DEMP data:", err?.message || err);
       }
     };
 
@@ -51,9 +59,9 @@ export function StatsTicker() {
   }, []);
 
   const stats = [
-    { label: "CIRCULATING SUPPLY", value: "1,000,000,000 DEMP" },
+    { label: "CIRCULATING SUPPLY", value: "1,000,000,000 $DEMP" },
     { label: "NETWORK", value: "SOLANA" },
-    { label: "DEMP PRICE", value: dempData.price },
+    { label: "$DEMP PRICE", value: dempData.price },
     { label: "MARKET CAP", value: dempData.mc },
     { label: "LIQUIDITY STATUS", value: "LOCKED" },
     { label: "CONTRACT STATUS", value: "SOL VERIFIED" },

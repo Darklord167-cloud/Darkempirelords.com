@@ -32,7 +32,7 @@ export function Navbar() {
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "Features", href: "/features" },
-    { name: "DEMP", href: "/token" },
+    { name: "$DEMP", href: "/token" },
     { name: "Holdings", href: "/holdings" },
     { name: "Whitepaper", href: "/whitepaper" },
     { name: "Roadmap", href: "/roadmap" },
@@ -40,6 +40,8 @@ export function Navbar() {
     { name: "Credits", href: "/credits" },
     { name: "FAQ", href: "/faq" },
     { name: "Contact", href: "/contact" },
+    { name: "Settings", href: "/settings" },
+    { name: "Command Center", href: "/command-center" },
   ];
 
   const socialLinks = [
@@ -83,8 +85,8 @@ export function Navbar() {
           <CustomWalletButton />
 
           <Button variant="outline" asChild className="border-primary/50 text-primary hover:bg-primary/20 hover:text-white font-heading font-bold shadow-[0_0_15px_rgba(168,85,247,0.2)]">
-            <a href="https://darkempirelords.com" target="_blank" rel="noreferrer">
-              HQ ACCESS
+            <a href="https://ais-dev-aao5behypscgwvze3hwwqj-40280094919.us-west1.run.app" target="_blank" rel="noreferrer">
+              TRADING ENGINE
             </a>
           </Button>
         </div>
