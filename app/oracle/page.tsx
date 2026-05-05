@@ -9,6 +9,7 @@ import { GoogleGenAI } from "@google/genai";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import bs58 from "bs58";
 
 const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
 
@@ -86,7 +87,7 @@ function TypewriterText({
 }
 
 export default function OraclePage() {
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, signMessage } = useWallet();
   const [profile, setProfile] = useState<any>(null);
   const [messages, setMessages] = useState<{ role: "user" | "oracle"; content: string }[]>([
     { role: "oracle", content: "Oracle online. Let's make some money and scale your digital empire. State your objective." },
@@ -160,6 +161,11 @@ export default function OraclePage() {
       toast.error("Insufficient credits. Purchase more in the Credits section.");
       return;
     }
+    
+    if (!signMessage) {
+      toast.error("Wallet does not support message signing. Cannot authenticate credit deduction.");
+      return;
+    }
 
     const userMessage = input.trim();
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
@@ -167,11 +173,22 @@ export default function OraclePage() {
     setLoading(true);
 
     try {
+      // Authenticate the deduction via wallet signature
+      const messageObj = { timestamp: Date.now(), action: "deduct_credits" };
+      const messageStr = JSON.stringify(messageObj);
+      const msgBytes = new TextEncoder().encode(messageStr);
+      const signatureBytes = await signMessage(msgBytes);
+      const signature = bs58.encode(signatureBytes);
+
       // Deduct credit first
       const deductRes = await fetch("/api/user/credits/deduct", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: publicKey.toBase58() }),
+        body: JSON.stringify({ 
+          walletAddress: publicKey.toBase58(),
+          signature,
+          message: messageStr
+        }),
       });
       
       const deductText = await deductRes.text();
