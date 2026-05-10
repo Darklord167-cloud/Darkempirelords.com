@@ -1,14 +1,6 @@
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const address = searchParams.get("address");
-
-  if (!address) {
-    console.warn("No address provided to Birdeye API, returning fallback data");
-    return NextResponse.json(fallbackData);
-  }
-
   const fallbackData = {
     data: {
       price: 0.0042,
@@ -17,6 +9,14 @@ export async function GET(request: Request) {
       priceChange24h: 3.5
     }
   };
+
+  const { searchParams } = new URL(request.url);
+  const address = searchParams.get("address");
+
+  if (!address) {
+    console.warn("No address provided to Birdeye API, returning fallback data");
+    return NextResponse.json(fallbackData);
+  }
 
   const apiKey = process.env.BIRDEYE_API_KEY;
   
