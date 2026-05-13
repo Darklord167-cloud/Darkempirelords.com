@@ -66,14 +66,14 @@ export function Navbar() {
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden xl:flex items-center gap-4 xl:gap-6">
+        <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
                 key={link.name}
                 href={link.href}
-                className={`text-xs xl:text-sm font-heading font-semibold tracking-wider transition-colors uppercase ${
+                className={`text-sm font-heading font-semibold tracking-wider transition-colors uppercase ${
                   isActive ? "text-primary text-glow" : "text-muted-foreground hover:text-primary hover:text-glow"
                 }`}
               >
@@ -84,7 +84,7 @@ export function Navbar() {
           {/* Custom Solana Wallet Adapter UI */}
           <CustomWalletButton />
 
-          <Button variant="outline" asChild className="border-primary/50 text-primary hover:bg-primary/20 hover:text-white font-heading font-bold shadow-[0_0_15px_rgba(168,85,247,0.2)] text-xs xl:text-sm">
+          <Button variant="outline" asChild className="border-primary/50 text-primary hover:bg-primary/20 hover:text-white font-heading font-bold shadow-[0_0_15px_rgba(168,85,247,0.2)]">
             <a href="https://ais-dev-aao5behypscgwvze3hwwqj-40280094919.us-west1.run.app" target="_blank" rel="noreferrer">
               TRADING ENGINE
             </a>
@@ -93,7 +93,7 @@ export function Navbar() {
 
         {/* Mobile Toggle */}
         <button
-          className="xl:hidden text-white p-2"
+          className="md:hidden text-white p-2"
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle menu"
         >
@@ -108,7 +108,7 @@ export function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="xl:hidden bg-black/95 border-b border-white/10 overflow-y-auto max-h-[calc(100vh-80px)]"
+            className="md:hidden bg-black/95 border-b border-white/10 overflow-hidden"
           >
             <div className="flex flex-col p-6 gap-1">
               {navLinks.map((link) => {
