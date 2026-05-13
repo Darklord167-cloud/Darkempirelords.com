@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, TerminalSquare, Coins } from "lucide-react";
@@ -11,56 +11,75 @@ import { toast } from "sonner";
 import Link from "next/link";
 import bs58 from "bs58";
 
+// --- Types & Interfaces ---
+interface UserProfile {
+  credits: number;
+  [key: string]: any;
+}
+
+interface Message {
+  role: "user" | "oracle";
+  content: string;
+}
+
+// SECURITY WARNING: In a true production environment, you should move the Gemini API 
+// call to your backend to prevent users from scraping your NEXT_PUBLIC key.
 const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
 
-function TypewriterText({ 
-  content, 
+function TypewriterText({
+  content,
   isOracle,
   onActiveStateChange,
-  disableAudio = false
-}: { 
-  content: string; 
+  disableAudio = false,
+}: {
+  content: string;
   isOracle: boolean;
   onActiveStateChange?: (isActive: boolean) => void;
   disableAudio?: boolean;
 }) {
   const [displayedContent, setDisplayedContent] = useState("");
   const [isTyping, setIsTyping] = useState(isOracle);
+  const synth = typeof window !== "undefined" ? window.speechSynthesis : null;
 
   useEffect(() => {
     if (!isOracle) {
-      const t = setTimeout(() => setDisplayedContent(content), 0);
-      return () => clearTimeout(t);
+      setDisplayedContent(content);
+      return;
     }
 
-    const t = setTimeout(() => {
-      setIsTyping(true);
-      setDisplayedContent("");
-      onActiveStateChange?.(true);
-    }, 0);
+    setIsTyping(true);
+    setDisplayedContent("");
+    onActiveStateChange?.(true);
 
-    const synth = window.speechSynthesis;
     let intervalId: NodeJS.Timeout;
 
-    if (!disableAudio) {
+    const speak = () => {
+      if (disableAudio || !synth) return;
+      
       const utterance = new SpeechSynthesisUtterance(content);
-      
       const voices = synth.getVoices();
-      const selectedVoice = voices.find(v => 
-        v.name.includes("Google UK English Female") || 
-        v.name.includes("Samantha") || 
-        v.name.includes("Microsoft Zira") ||
-        (v.lang.startsWith('en') && v.name.includes('Female'))
-      ) || voices[0];
       
+      const selectedVoice = voices.find((v) =>
+        v.name.includes("Google UK English Female") ||
+        v.name.includes("Samantha") ||
+        v.name.includes("Microsoft Zira") ||
+        (v.lang.startsWith("en") && v.name.includes("Female"))
+      ) || voices[0];
+
       if (selectedVoice) {
         utterance.voice = selectedVoice;
       }
 
       utterance.pitch = 1.1;
       utterance.rate = 1.0;
-      
       synth.speak(utterance);
+    };
+
+    // Handle voice loading asynchronously (browser quirk)
+    if (synth && synth.getVoices().length === 0) {
+      synth.onvoiceschanged = speak;
+    } else {
+      speak();
     }
 
     let i = 0;
@@ -77,25 +96,37 @@ function TypewriterText({
 
     return () => {
       clearInterval(intervalId);
-      if (!disableAudio) {
+      if (synth && !disableAudio) {
         synth.cancel();
       }
     };
-  }, [content, isOracle, disableAudio]);
+  }, [content, isOracle, disableAudio, onActiveStateChange, synth]);
 
-  return <span>{displayedContent}{isTyping && <span className="opacity-75 animate-pulse text-primary">▋</span>}</span>;
+  return (
+    <span>
+      {displayedContent}
+      {isTyping && <span className="opacity-75 animate-pulse text-primary ml-1">▋</span>}
+    </span>
+  );
 }
 
 export default function OraclePage() {
   const { publicKey, connected, signMessage } = useWallet();
-  const [profile, setProfile] = useState<any>(null);
-  const [messages, setMessages] = useState<{ role: "user" | "oracle"; content: string }[]>([
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [messages, setMessages] = useState<Message[]>([
     { role: "oracle", content: "Oracle online. Let's make some money and scale your digital empire. State your objective." },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [isOracleSpeaking, setIsOracleSpeaking] = useState(false);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages update or oracle is typing
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isOracleSpeaking]);
 
   const fetchProfile = async () => {
     try {
@@ -104,36 +135,26 @@ export default function OraclePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ walletAddress: publicKey?.toBase58() }),
       });
-      
-      if (!res.ok) {
-        throw new Error(`Profile fetch failed: ${res.status}`);
-      }
+
+      if (!res.ok) throw new Error(`Profile fetch failed: ${res.status}`);
 
       const text = await res.text();
-      if (text.includes("<!doctype html>") || text.includes("<html")) {
-        return;
-      }
+      if (text.includes("<!doctype html>") || text.includes("<html")) return;
 
-      try {
-        const data = JSON.parse(text);
-        setProfile(data);
-      } catch (e) {
-        console.error("Failed to parse profile JSON", e);
-      }
+      const data = JSON.parse(text);
+      setProfile(data);
     } catch (err) {
       console.error("Failed to fetch profile", err);
+      toast.error("Failed to load user profile.");
     }
   };
 
   useEffect(() => {
-    const load = async () => {
-      if (connected && publicKey) {
-        await fetchProfile();
-      } else {
-        setProfile(null);
-      }
-    };
-    load();
+    if (connected && publicKey) {
+      fetchProfile();
+    } else {
+      setProfile(null);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connected, publicKey]);
 
@@ -146,10 +167,10 @@ export default function OraclePage() {
     }
   };
 
-  const sendMessage = async (e: React.FormEvent) => {
+  const sendMessage = async (e: FormEvent) => {
     e.preventDefault();
     unlockAudio();
-    
+
     if (!input.trim() || loading || isOracleSpeaking) return;
 
     if (!connected || !publicKey) {
@@ -161,7 +182,7 @@ export default function OraclePage() {
       toast.error("Insufficient credits. Purchase more in the Credits section.");
       return;
     }
-    
+
     if (!signMessage) {
       toast.error("Wallet does not support message signing. Cannot authenticate credit deduction.");
       return;
@@ -173,51 +194,45 @@ export default function OraclePage() {
     setLoading(true);
 
     try {
-      // Authenticate the deduction via wallet signature
+      // 1. Authenticate & Deduct Credits
       const messageObj = { timestamp: Date.now(), action: "deduct_credits" };
       const messageStr = JSON.stringify(messageObj);
       const msgBytes = new TextEncoder().encode(messageStr);
       const signatureBytes = await signMessage(msgBytes);
       const signature = bs58.encode(signatureBytes);
 
-      // Deduct credit first
       const deductRes = await fetch("/api/user/credits/deduct", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           walletAddress: publicKey.toBase58(),
           signature,
-          message: messageStr
+          message: messageStr,
         }),
       });
-      
+
       const deductText = await deductRes.text();
       if (deductText.includes("<!doctype html>") || deductText.includes("<html")) {
         throw new Error("Server is currently initiating environment. Please wait 10 seconds.");
       }
 
-      let deductData: any;
-      try {
-        deductData = JSON.parse(deductText);
-      } catch (e) {
-        throw new Error("Unexpected server response format.");
-      }
-
+      const deductData = JSON.parse(deductText);
       if (!deductRes.ok) {
         throw new Error(deductData.message || "Failed to deduct credits");
       }
-      
-      // Update local profile state
-      setProfile((prev: any) => ({ ...prev, credits: deductData.credits }));
 
-      const history = messages.map(msg => ({
-        role: msg.role === "oracle" ? "model" as const : "user" as const,
-        parts: [{ text: msg.content }]
-      }));
+      setProfile((prev) => prev ? { ...prev, credits: deductData.credits } : null);
 
-      const model = (ai as any).getGenerativeModel({ 
-        model: "gemini-1.5-flash",
-        systemInstruction: `You are an advanced AI operator for Dark Empire Lords LLC.
+      // 2. Query Gemini AI
+      try {
+        const history = messages.map((msg) => ({
+          role: msg.role === "oracle" ? ("model" as const) : ("user" as const),
+          parts: [{ text: msg.content }],
+        }));
+
+        const model = (ai as any).getGenerativeModel({
+          model: "gemini-1.5-flash",
+          systemInstruction: `You are an advanced AI operator for Dark Empire Lords LLC.
 
 PRIMARY OBJECTIVE:
 Help the user make money, build systems, and execute efficiently.
@@ -238,17 +253,28 @@ BEHAVIOR RULES:
 - Do not give vague advice
 - Prioritize real-world execution
 - Act like a high-level operator scaling a digital empire.`,
-      });
+        });
 
-      const chat = model.startChat({
-        history: history.slice(0, -1),
-      });
+        // Cap history to last 10 messages to save tokens and prevent crashes
+        const cappedHistory = history.slice(-10);
+        
+        const chat = model.startChat({
+          history: cappedHistory.slice(0, -1),
+        });
 
-      const result = await chat.sendMessage(userMessage);
-      const responseText = result.response.text();
-      setMessages((prev) => [...prev, { role: "oracle", content: responseText || "Communication empty." }]);
+        const result = await chat.sendMessage(userMessage);
+        const responseText = result.response.text();
+        
+        setMessages((prev) => [...prev, { role: "oracle", content: responseText || "Communication empty." }]);
+      } catch (aiError: any) {
+        console.error("AI Generation Error:", aiError);
+        // Note: You may want to add a call here to refund the user's credit if the AI fails
+        throw new Error("Neural link severed. AI generation failed. Check your API limits.");
+      }
+
     } catch (err: any) {
       setMessages((prev) => [...prev, { role: "oracle", content: err.message || "Communication disrupted." }]);
+      toast.error(err.message || "An error occurred during transmission.");
     } finally {
       setLoading(false);
     }
@@ -257,18 +283,21 @@ BEHAVIOR RULES:
   const isCoreActive = loading || isOracleSpeaking;
 
   return (
-    <div className="min-h-screen py-16 bg-[#0a001a] relative overflow-hidden flex flex-col items-center justify-center">
+    <div className="min-h-screen pt-24 pb-8 bg-[#0a001a] relative overflow-hidden flex flex-col items-center">
       {/* Background Image & Effects */}
-      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070')] bg-cover bg-center bg-no-repeat opacity-20 mix-blend-screen pointer-events-none filter blur-[4px]" style={{ filter: 'hue-rotate(-45deg)' }} />
+      <div 
+        className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070')] bg-cover bg-center bg-no-repeat opacity-20 mix-blend-screen pointer-events-none filter blur-[4px]" 
+        style={{ filter: "hue-rotate(-45deg)" }} 
+      />
       <div className="absolute inset-0 bg-gradient-to-b from-[#0a001a] via-transparent to-[#0a001a] pointer-events-none opacity-80" />
       <div className="absolute bottom-0 left-0 right-0 h-[30vh] bg-gradient-to-t from-primary/20 to-transparent pointer-events-none mix-blend-screen" />
 
       {/* Title Area */}
-      <div className="absolute top-24 z-20 flex flex-col items-center">
+      <div className="relative z-20 flex flex-col items-center mb-8 shrink-0">
         <div className="flex items-center gap-4 mb-2">
           {connected && profile && (
             <Link href="/credits">
-              <motion.div 
+              <motion.div
                 whileHover={{ scale: 1.05 }}
                 className="flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-2 rounded-full cursor-pointer hover:bg-primary/20 transition-all"
               >
@@ -279,7 +308,7 @@ BEHAVIOR RULES:
           )}
         </div>
         <div className="mb-4 border-2 border-primary rounded-xl p-2.5 shadow-[0_0_20px_rgba(168,85,247,0.4)] backdrop-blur-sm bg-black/50">
-           <TerminalSquare className="h-10 w-10 text-primary drop-shadow-[0_0_10px_rgba(168,85,247,1)]" />
+          <TerminalSquare className="h-10 w-10 text-primary drop-shadow-[0_0_10px_rgba(168,85,247,1)]" />
         </div>
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white uppercase tracking-[0.2em] md:tracking-[0.3em] whitespace-nowrap drop-shadow-[0_0_20px_rgba(168,85,247,1)]">
           The Oracle
@@ -288,7 +317,7 @@ BEHAVIOR RULES:
 
       {/* The Core / Sphere */}
       <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none mt-10">
-        <div className={`oracle-structure ${isCoreActive ? 'oracle-structure-active' : 'oracle-structure-idle'}`}>
+        <div className={`oracle-structure ${isCoreActive ? "oracle-structure-active" : "oracle-structure-idle"}`}>
           <div className="oracle-inner-sphere" />
           <div className="oracle-ring oracle-ring-1" />
           <div className="oracle-ring oracle-ring-2" />
@@ -298,9 +327,9 @@ BEHAVIOR RULES:
       </div>
 
       {/* Chat Interface */}
-      <div className="container px-4 max-w-3xl mx-auto relative z-30 flex flex-col w-full h-[600px] mt-24">
+      <div className="container px-4 max-w-3xl mx-auto relative z-30 flex flex-col flex-1 w-full overflow-hidden">
         
-        <div className="flex-1 overflow-y-auto mb-6 p-4 flex flex-col custom-scrollbar relative z-30">
+        <div className="flex-1 overflow-y-auto mb-6 p-4 flex flex-col custom-scrollbar relative z-30 scroll-smooth">
           {messages.map((msg, idx) => (
             <motion.div
               key={idx}
@@ -321,9 +350,9 @@ BEHAVIOR RULES:
                   </span>
                 </div>
                 {msg.role === "oracle" && idx === messages.length - 1 ? (
-                  <TypewriterText 
-                    content={msg.content} 
-                    isOracle={true} 
+                  <TypewriterText
+                    content={msg.content}
+                    isOracle={true}
                     onActiveStateChange={setIsOracleSpeaking}
                     disableAudio={idx === 0}
                   />
@@ -333,19 +362,26 @@ BEHAVIOR RULES:
               </div>
             </motion.div>
           ))}
+          
           {loading && (
-            <div className="flex flex-col items-center mt-auto pt-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              className="flex flex-col items-center mt-auto pt-4"
+            >
               <div className="p-6 rounded-3xl w-full max-w-[90%] bg-[#0f051e]/80 border border-white/20 text-white/90 shadow-[0_0_25px_rgba(168,85,247,0.2)] backdrop-blur-2xl flex items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 <span className="ml-3 text-xs text-primary font-mono uppercase tracking-[0.2em] animate-pulse">
                   Processing...
                 </span>
               </div>
-            </div>
+            </motion.div>
           )}
+          {/* Auto-scroll anchor */}
+          <div ref={messagesEndRef} className="h-1" />
         </div>
 
-        <form onSubmit={sendMessage} className="flex gap-4 relative z-30 mb-8 max-w-[90%] mx-auto w-full">
+        <form onSubmit={sendMessage} className="flex gap-4 relative z-30 mb-4 max-w-[90%] mx-auto w-full shrink-0">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -355,8 +391,8 @@ BEHAVIOR RULES:
           />
           <Button
             type="submit"
-            className="h-14 px-8 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#b026ff] via-primary to-[#5b148c] hover:from-[#c45eff] hover:via-[#a020f0] hover:to-[#4a0e7a] border border-primary/50 text-white font-bold uppercase tracking-[0.2em] rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.6),inset_0_0_15px_rgba(255,255,255,0.3)] transition-all active:scale-95 flex-shrink-0"
-            disabled={loading || isOracleSpeaking}
+            className="h-14 px-8 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#b026ff] via-primary to-[#5b148c] hover:from-[#c45eff] hover:via-[#a020f0] hover:to-[#4a0e7a] border border-primary/50 text-white font-bold uppercase tracking-[0.2em] rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.6),inset_0_0_15px_rgba(255,255,255,0.3)] transition-all active:scale-95 flex-shrink-0 disabled:opacity-50"
+            disabled={loading || isOracleSpeaking || !input.trim()}
           >
             Transmit
           </Button>
