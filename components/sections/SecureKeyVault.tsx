@@ -70,12 +70,6 @@ export function SecureKeyVault() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingKeys, setIsLoadingKeys] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      loadKeys();
-    }
-  }, [user]);
-
   const loadKeys = async () => {
     setIsLoadingKeys(true);
     try {
@@ -94,6 +88,12 @@ export function SecureKeyVault() {
       setIsLoadingKeys(false);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      loadKeys();
+    }
+  }, [user]);
 
   const saveKeys = async () => {
     if (!user) return;

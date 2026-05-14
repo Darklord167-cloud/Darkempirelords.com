@@ -67,15 +67,22 @@ export function CommandCenter() {
   const [showConfig, setShowConfig] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setTradingEngineUrl(window.location.origin);
+    // Only access window on the client side after mount
+    const origin = window.location.origin;
+    if (origin !== tradingEngineUrl) {
+      setTradingEngineUrl(origin);
     }
-  }, []);
+  }, [tradingEngineUrl]);
 
   useEffect(() => {
     if (!user) {
-      setIsLoadingBots(false);
-      return;
+      // Defer state update if needed, but for now we skip to avoid cascading sync updates.
+      // setIsLoadingBots is initialized to true. We should rely on standard loading state patterns.
+      // Using a timeout to break the synchronous setState error
+      const timer = setTimeout(() => {
+        setIsLoadingBots(false);
+      }, 0);
+      return () => clearTimeout(timer);
     }
 
     // Subscribe to Bot State Persistence (Upgrade 2 on Trading Engine)

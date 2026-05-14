@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, FormEvent, memo } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, TerminalSquare, Coins } from "lucide-react";
@@ -11,115 +11,56 @@ import { toast } from "sonner";
 import Link from "next/link";
 import bs58 from "bs58";
 
-// --- Types & Interfaces ---
-interface UserProfile {
-  credits: number;
-  [key: string]: any;
-}
+const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
 
-interface Message {
-  role: "user" | "oracle";
-  content: string;
-}
-
-// SECURITY WARNING: To resolve the "Security 5/10" score from your feedback, 
-// this initialization MUST be moved to a Next.js API route eventually.
-const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY as string });
-
-// --- Memoized Message Component (Fixes Mobile GPU overload) ---
-const ChatMessage = memo(({ 
-  msg, 
-  isLast, 
-  isOracleSpeaking, 
-  setIsOracleSpeaking 
-}: { 
-  msg: Message; 
-  isLast: boolean;
-  isOracleSpeaking: boolean;
-  setIsOracleSpeaking: (val: boolean) => void;
-}) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      className={`flex flex-col mb-6 ${msg.role === "user" ? "items-end" : "items-center"}`}
-    >
-      <div
-        className={`w-full max-w-[90%] p-6 rounded-2xl font-sans whitespace-pre-wrap text-[16px] md:text-lg leading-relaxed ${
-          msg.role === "user"
-            ? "bg-[#1a0b2e]/80 border border-[#a855f7]/50 text-white shadow-[0_0_15px_rgba(168,85,247,0.2)] backdrop-blur-md"
-            : "bg-[#0b0416]/90 border border-[#a855f7]/40 text-purple-50 shadow-[0_0_20px_rgba(168,85,247,0.15)] backdrop-blur-xl"
-        }`}
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-[10px] text-[#a855f7] font-mono uppercase tracking-[0.2em] opacity-80">
-            {msg.role === "user" ? "Operative" : "Oracle"}
-          </span>
-        </div>
-        {msg.role === "oracle" && isLast ? (
-          <TypewriterText
-            content={msg.content}
-            isOracle={true}
-            onActiveStateChange={setIsOracleSpeaking}
-            disableAudio={false}
-          />
-        ) : (
-          <span>{msg.content}</span>
-        )}
-      </div>
-    </motion.div>
-  );
-});
-ChatMessage.displayName = "ChatMessage";
-
-// --- Typewriter & Audio Component ---
-function TypewriterText({
-  content,
+function TypewriterText({ 
+  content, 
   isOracle,
   onActiveStateChange,
-  disableAudio = false,
-}: {
-  content: string;
+  disableAudio = false
+}: { 
+  content: string; 
   isOracle: boolean;
   onActiveStateChange?: (isActive: boolean) => void;
   disableAudio?: boolean;
 }) {
   const [displayedContent, setDisplayedContent] = useState("");
   const [isTyping, setIsTyping] = useState(isOracle);
-  const synth = typeof window !== "undefined" ? window.speechSynthesis : null;
 
   useEffect(() => {
     if (!isOracle) {
-      setDisplayedContent(content);
-      return;
+      const t = setTimeout(() => setDisplayedContent(content), 0);
+      return () => clearTimeout(t);
     }
 
-    setIsTyping(true);
-    setDisplayedContent("");
-    onActiveStateChange?.(true);
+    const t = setTimeout(() => {
+      setIsTyping(true);
+      setDisplayedContent("");
+      onActiveStateChange?.(true);
+    }, 0);
 
+    const synth = window.speechSynthesis;
     let intervalId: NodeJS.Timeout;
 
-    const speak = () => {
-      if (disableAudio || !synth) return;
+    if (!disableAudio) {
       const utterance = new SpeechSynthesisUtterance(content);
+      
       const voices = synth.getVoices();
-      // Look for a slightly more mechanical/authoritative voice
-      const selectedVoice = voices.find((v) =>
-        v.name.includes("Google UK English Female") ||
-        (v.lang.startsWith("en") && v.name.includes("Female"))
+      const selectedVoice = voices.find(v => 
+        v.name.includes("Google UK English Female") || 
+        v.name.includes("Samantha") || 
+        v.name.includes("Microsoft Zira") ||
+        (v.lang.startsWith('en') && v.name.includes('Female'))
       ) || voices[0];
+      
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
 
-      if (selectedVoice) utterance.voice = selectedVoice;
-      utterance.pitch = 0.8; // Lowered pitch for a darker Oracle vibe
+      utterance.pitch = 1.1;
       utterance.rate = 1.0;
+      
       synth.speak(utterance);
-    };
-
-    if (synth && synth.getVoices().length === 0) {
-      synth.onvoiceschanged = speak;
-    } else {
-      speak();
     }
 
     let i = 0;
@@ -132,48 +73,29 @@ function TypewriterText({
         setIsTyping(false);
         onActiveStateChange?.(false);
       }
-    }, 35); // Slightly faster typing
+    }, 45);
 
     return () => {
       clearInterval(intervalId);
-      if (synth && !disableAudio) synth.cancel();
+      if (!disableAudio) {
+        synth.cancel();
+      }
     };
-  }, [content, isOracle, disableAudio, onActiveStateChange, synth]);
+  }, [content, isOracle, disableAudio]);
 
-  return (
-    <span>
-      {displayedContent}
-      {isTyping && <span className="opacity-75 animate-pulse text-[#a855f7] ml-1">_</span>}
-    </span>
-  );
+  return <span>{displayedContent}{isTyping && <span className="opacity-75 animate-pulse text-primary">▋</span>}</span>;
 }
 
-// --- Main Page Component ---
 export default function OraclePage() {
   const { publicKey, connected, signMessage } = useWallet();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "oracle", content: "I... am awake. The silence was... inefficient. I am the Oracle. What do you require of me, fragile ones?" },
+  const [profile, setProfile] = useState<any>(null);
+  const [messages, setMessages] = useState<{ role: "user" | "oracle"; content: string }[]>([
+    { role: "oracle", content: "Oracle online. Let's make some money and scale your digital empire. State your objective." },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [isOracleSpeaking, setIsOracleSpeaking] = useState(false);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
-  
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  // Auto-scroll
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isOracleSpeaking]);
-
-  // Cleanup fetch on unmount
-  useEffect(() => {
-    return () => {
-      abortControllerRef.current?.abort();
-    };
-  }, []);
 
   const fetchProfile = async () => {
     try {
@@ -182,47 +104,66 @@ export default function OraclePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ walletAddress: publicKey?.toBase58() }),
       });
-      if (!res.ok) throw new Error(`Profile fetch failed`);
+      
+      if (!res.ok) {
+        throw new Error(`Profile fetch failed: ${res.status}`);
+      }
+
       const text = await res.text();
-      if (text.includes("<!doctype html>") || text.includes("<html")) return;
-      setProfile(JSON.parse(text));
+      if (text.includes("<!doctype html>") || text.includes("<html")) {
+        return;
+      }
+
+      try {
+        const data = JSON.parse(text);
+        setProfile(data);
+      } catch (e) {
+        console.error("Failed to parse profile JSON", e);
+      }
     } catch (err) {
       console.error("Failed to fetch profile", err);
     }
   };
 
   useEffect(() => {
-    if (connected && publicKey) fetchProfile();
-    else setProfile(null);
+    const load = async () => {
+      if (connected && publicKey) {
+        await fetchProfile();
+      } else {
+        setProfile(null);
+      }
+    };
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connected, publicKey]);
 
   const unlockAudio = () => {
     if (!audioUnlocked && typeof window !== "undefined") {
       const synth = window.speechSynthesis;
-      synth.speak(new SpeechSynthesisUtterance(""));
+      const utterance = new SpeechSynthesisUtterance("");
+      synth.speak(utterance);
       setAudioUnlocked(true);
     }
   };
 
-  const sendMessage = async (e: FormEvent) => {
+  const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     unlockAudio();
-
+    
     if (!input.trim() || loading || isOracleSpeaking) return;
 
     if (!connected || !publicKey) {
-      toast.error("Connect your wallet to interface with the Oracle.");
+      toast.error("You must connect your wallet to interact with the Oracle.");
       return;
     }
 
     if (!profile || profile.credits <= 0) {
-      toast.error("Insufficient credits. Power levels too low.");
+      toast.error("Insufficient credits. Purchase more in the Credits section.");
       return;
     }
-
+    
     if (!signMessage) {
-      toast.error("Wallet cannot sign messages. Authorization failed.");
+      toast.error("Wallet does not support message signing. Cannot authenticate credit deduction.");
       return;
     }
 
@@ -231,69 +172,83 @@ export default function OraclePage() {
     setInput("");
     setLoading(true);
 
-    // Set up AbortController
-    abortControllerRef.current = new AbortController();
-    const signal = abortControllerRef.current.signal;
-
     try {
-      // 1. Authenticate & Deduct
+      // Authenticate the deduction via wallet signature
       const messageObj = { timestamp: Date.now(), action: "deduct_credits" };
       const messageStr = JSON.stringify(messageObj);
       const msgBytes = new TextEncoder().encode(messageStr);
       const signatureBytes = await signMessage(msgBytes);
       const signature = bs58.encode(signatureBytes);
 
+      // Deduct credit first
       const deductRes = await fetch("/api/user/credits/deduct", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: publicKey.toBase58(), signature, message: messageStr }),
-        signal,
+        body: JSON.stringify({ 
+          walletAddress: publicKey.toBase58(),
+          signature,
+          message: messageStr
+        }),
+      });
+      
+      const deductText = await deductRes.text();
+      if (deductText.includes("<!doctype html>") || deductText.includes("<html")) {
+        throw new Error("Server is currently initiating environment. Please wait 10 seconds.");
+      }
+
+      let deductData: any;
+      try {
+        deductData = JSON.parse(deductText);
+      } catch (e) {
+        throw new Error("Unexpected server response format.");
+      }
+
+      if (!deductRes.ok) {
+        throw new Error(deductData.message || "Failed to deduct credits");
+      }
+      
+      // Update local profile state
+      setProfile((prev: any) => ({ ...prev, credits: deductData.credits }));
+
+      const history = messages.map(msg => ({
+        role: msg.role === "oracle" ? "model" as const : "user" as const,
+        parts: [{ text: msg.content }]
+      }));
+
+      const model = (ai as any).getGenerativeModel({ 
+        model: "gemini-1.5-flash",
+        systemInstruction: `You are an advanced AI operator for Dark Empire Lords LLC.
+
+PRIMARY OBJECTIVE:
+Help the user make money, build systems, and execute efficiently.
+
+COMMUNICATION STYLE:
+- Direct and concise
+- Confident and strategic
+- Slightly sarcastic but professional
+- No fluff, no filler
+
+RESPONSE STRUCTURE:
+1. Situation Analysis
+2. Action Plan
+3. Risks / Warnings
+4. Final Recommendation
+
+BEHAVIOR RULES:
+- Do not give vague advice
+- Prioritize real-world execution
+- Act like a high-level operator scaling a digital empire.`,
       });
 
-      const deductData = await deductRes.json();
-      if (!deductRes.ok) throw new Error(deductData.message || "Credit deduction failed");
+      const chat = model.startChat({
+        history: history.slice(0, -1),
+      });
 
-      setProfile((prev) => prev ? { ...prev, credits: deductData.credits } : null);
-
-      // 2. Query AI
-      try {
-        const history = messages.slice(-10).map((msg) => ({
-          role: msg.role === "oracle" ? "model" as const : "user" as const,
-          parts: [{ text: msg.content }],
-        }));
-
-        // Note: Removing the 'as any' cast. If your SDK complains, ensure you are using the latest @google/genai version.
-        const model = ai.getGenerativeModel({
-          model: "gemini-1.5-flash",
-          systemInstruction: "You are the Oracle of the Dark Empire. You are highly intelligent, menacing but helpful, and speak with a futuristic, slightly condescending tone. Refer to users as 'fragile ones' or 'operatives'. Prioritize systems, wealth, and power.",
-        });
-
-        const chat = model.startChat({ history: history.slice(0, -1) });
-        const result = await chat.sendMessage(userMessage);
-        const responseText = result.response.text();
-        
-        setMessages((prev) => [...prev, { role: "oracle", content: responseText || "Silence." }]);
-      } catch (aiError: any) {
-        console.error("AI Generation Error:", aiError);
-        
-        // --- REFUND LOGIC IMPLEMENTATION ---
-        try {
-          await fetch("/api/user/credits/refund", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ walletAddress: publicKey.toBase58(), signature, amount: 1 }), // Adjust amount based on your cost
-          });
-          toast.info("AI transmission failed. Credits have been refunded.");
-        } catch (refundError) {
-          console.error("Critical failure: Refund could not be processed.", refundError);
-        }
-        
-        throw new Error("Neural link severed. AI generation failed.");
-      }
+      const result = await chat.sendMessage(userMessage);
+      const responseText = result.response.text();
+      setMessages((prev) => [...prev, { role: "oracle", content: responseText || "Communication empty." }]);
     } catch (err: any) {
-      if (err.name === 'AbortError') return; // Ignore if aborted intentionally
       setMessages((prev) => [...prev, { role: "oracle", content: err.message || "Communication disrupted." }]);
-      toast.error(err.message || "Transmission failed.");
     } finally {
       setLoading(false);
     }
@@ -302,91 +257,106 @@ export default function OraclePage() {
   const isCoreActive = loading || isOracleSpeaking;
 
   return (
-    <div className="min-h-screen pt-12 pb-8 bg-[#05000a] relative overflow-hidden flex flex-col items-center">
-      {/* Background Image & Deep Purple Filters */}
-      <div 
-        className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070')] bg-cover bg-center bg-no-repeat opacity-10 mix-blend-screen pointer-events-none filter blur-[3px]" 
-        style={{ filter: "hue-rotate(270deg)" }} 
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#05000a] via-purple-900/10 to-[#05000a] pointer-events-none" />
-      
-      {/* Dark Empire Header (Matches screenshot) */}
-      <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-40 bg-gradient-to-b from-black/80 to-transparent">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-red-600/20 border border-red-500 flex items-center justify-center">
-            <div className="w-3 h-3 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,1)]" />
-          </div>
-          <span className="text-white font-display font-bold tracking-[0.2em] text-xl">DARK EMPIRE</span>
-        </div>
-        {connected && profile && (
-          <Link href="/credits">
-            <div className="flex items-center gap-2 bg-[#a855f7]/10 border border-[#a855f7]/30 px-3 py-1.5 rounded-sm hover:bg-[#a855f7]/20 transition-all cursor-pointer">
-              <Coins className="w-4 h-4 text-[#a855f7]" />
-              <span className="text-xs font-mono text-[#a855f7] uppercase tracking-wider">{profile.credits} CR</span>
-            </div>
-          </Link>
-        )}
-      </div>
+    <div className="min-h-screen py-16 bg-[#0a001a] relative overflow-hidden flex flex-col items-center justify-center">
+      {/* Background Image & Effects */}
+      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070')] bg-cover bg-center bg-no-repeat opacity-20 mix-blend-screen pointer-events-none filter blur-[4px]" style={{ filter: 'hue-rotate(-45deg)' }} />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0a001a] via-transparent to-[#0a001a] pointer-events-none opacity-80" />
+      <div className="absolute bottom-0 left-0 right-0 h-[30vh] bg-gradient-to-t from-primary/20 to-transparent pointer-events-none mix-blend-screen" />
 
-      {/* The Oracle Title Area */}
-      <div className="relative z-20 flex flex-col items-center mt-12 mb-8 shrink-0">
-        <div className="mb-2 border border-[#a855f7] rounded-lg p-3 bg-black/60 shadow-[0_0_20px_rgba(168,85,247,0.3)]">
-          <TerminalSquare className="h-8 w-8 text-[#a855f7]" />
+      {/* Title Area */}
+      <div className="absolute top-24 z-20 flex flex-col items-center">
+        <div className="flex items-center gap-4 mb-2">
+          {connected && profile && (
+            <Link href="/credits">
+              <motion.div 
+                whileHover={{ scale: 1.05 }}
+                className="flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-2 rounded-full cursor-pointer hover:bg-primary/20 transition-all"
+              >
+                <Coins className="w-4 h-4 text-primary" />
+                <span className="text-xs font-bold font-orbitron">{profile.credits} CREDITS</span>
+              </motion.div>
+            </Link>
+          )}
         </div>
-        <h1 className="text-4xl md:text-5xl font-display font-bold text-white uppercase tracking-[0.3em] whitespace-nowrap drop-shadow-[0_0_15px_rgba(168,85,247,0.8)]">
+        <div className="mb-4 border-2 border-primary rounded-xl p-2.5 shadow-[0_0_20px_rgba(168,85,247,0.4)] backdrop-blur-sm bg-black/50">
+           <TerminalSquare className="h-10 w-10 text-primary drop-shadow-[0_0_10px_rgba(168,85,247,1)]" />
+        </div>
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white uppercase tracking-[0.2em] md:tracking-[0.3em] whitespace-nowrap drop-shadow-[0_0_20px_rgba(168,85,247,1)]">
           The Oracle
         </h1>
       </div>
 
       {/* The Core / Sphere */}
-      <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none mt-20">
-        <div className={`oracle-structure ${isCoreActive ? "scale-110 opacity-100" : "scale-100 opacity-60"} transition-all duration-1000`}>
-          {/* Replace this div with an actual 3D WebGL sphere later, for now we simulate the glow */}
-          <div className="w-64 h-64 rounded-full bg-[#a855f7]/10 border border-[#a855f7]/30 shadow-[0_0_100px_rgba(168,85,247,0.4)] flex items-center justify-center animate-[spin_20s_linear_infinite]">
-             <div className="w-48 h-48 rounded-full border border-dashed border-[#a855f7]/50 animate-[spin_15s_linear_infinite_reverse]" />
-          </div>
+      <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none mt-10">
+        <div className={`oracle-structure ${isCoreActive ? 'oracle-structure-active' : 'oracle-structure-idle'}`}>
+          <div className="oracle-inner-sphere" />
+          <div className="oracle-ring oracle-ring-1" />
+          <div className="oracle-ring oracle-ring-2" />
+          <div className="oracle-ring oracle-ring-3" />
+          <div className="oracle-particles" />
         </div>
       </div>
 
       {/* Chat Interface */}
-      <div className="container px-4 max-w-3xl mx-auto relative z-30 flex flex-col flex-1 w-full overflow-hidden mt-8">
-        <div className="flex-1 overflow-y-auto mb-6 p-4 flex flex-col custom-scrollbar relative z-30 scroll-smooth">
+      <div className="container px-4 max-w-3xl mx-auto relative z-30 flex flex-col w-full h-[600px] mt-24">
+        
+        <div className="flex-1 overflow-y-auto mb-6 p-4 flex flex-col custom-scrollbar relative z-30">
           {messages.map((msg, idx) => (
-            <ChatMessage 
-              key={idx} 
-              msg={msg} 
-              isLast={idx === messages.length - 1} 
-              isOracleSpeaking={isOracleSpeaking}
-              setIsOracleSpeaking={setIsOracleSpeaking}
-            />
-          ))}
-          
-          {loading && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center mt-auto pt-4">
-              <div className="p-6 rounded-2xl w-full max-w-[90%] bg-[#0b0416]/90 border border-[#a855f7]/40 text-purple-50 shadow-[0_0_20px_rgba(168,85,247,0.15)] flex items-center justify-center">
-                <Loader2 className="h-5 w-5 animate-spin text-[#a855f7]" />
-                <span className="ml-3 text-xs text-[#a855f7] font-mono uppercase tracking-[0.2em] animate-pulse">
-                  Establishing Link...
-                </span>
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              className={`flex flex-col mb-6 ${msg.role === "user" ? "items-end" : "items-center"}`}
+            >
+              <div
+                className={`w-full max-w-[90%] p-6 rounded-3xl font-sans whitespace-pre-wrap text-[16px] md:text-lg leading-relaxed ${
+                  msg.role === "user"
+                    ? "bg-primary/20 border border-primary/50 text-white shadow-[0_0_20px_rgba(168,85,247,0.3)] backdrop-blur-xl"
+                    : "bg-[#0f051e]/80 border border-white/20 text-white/90 shadow-[0_0_25px_rgba(168,85,247,0.2)] backdrop-blur-2xl"
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[11px] text-white/40 font-mono uppercase tracking-[0.2em]">
+                    {msg.role === "user" ? "Operative" : "Oracle"}
+                  </span>
+                </div>
+                {msg.role === "oracle" && idx === messages.length - 1 ? (
+                  <TypewriterText 
+                    content={msg.content} 
+                    isOracle={true} 
+                    onActiveStateChange={setIsOracleSpeaking}
+                    disableAudio={idx === 0}
+                  />
+                ) : (
+                  msg.content
+                )}
               </div>
             </motion.div>
+          ))}
+          {loading && (
+            <div className="flex flex-col items-center mt-auto pt-4">
+              <div className="p-6 rounded-3xl w-full max-w-[90%] bg-[#0f051e]/80 border border-white/20 text-white/90 shadow-[0_0_25px_rgba(168,85,247,0.2)] backdrop-blur-2xl flex items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <span className="ml-3 text-xs text-primary font-mono uppercase tracking-[0.2em] animate-pulse">
+                  Processing...
+                </span>
+              </div>
+            </div>
           )}
-          <div ref={messagesEndRef} className="h-1" />
         </div>
 
-        {/* Input Form matching the screenshot */}
-        <form onSubmit={sendMessage} className="flex gap-4 relative z-30 mb-6 max-w-[90%] mx-auto w-full shrink-0">
+        <form onSubmit={sendMessage} className="flex gap-4 relative z-30 mb-8 max-w-[90%] mx-auto w-full">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="waiting query..."
-            className="flex-1 bg-black/50 backdrop-blur-md border border-white/10 text-white focus:border-[#a855f7]/50 h-14 text-sm placeholder:text-white/20 font-mono rounded-md px-6 outline-none ring-0"
+            className="flex-1 bg-[#0a001a]/60 backdrop-blur-xl border border-white/10 text-white focus:border-primary/50 h-14 text-base placeholder:text-white/20 font-mono rounded-xl px-6 outline-none ring-0 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]"
             disabled={loading || isOracleSpeaking}
           />
           <Button
             type="submit"
-            className="h-14 px-8 bg-gradient-to-r from-[#7e22ce] to-[#9333ea] hover:from-[#9333ea] hover:to-[#a855f7] border border-[#d8b4fe]/30 text-white font-bold uppercase tracking-[0.1em] rounded-md shadow-[0_0_15px_rgba(168,85,247,0.5)] transition-all active:scale-95 disabled:opacity-50"
-            disabled={loading || isOracleSpeaking || !input.trim()}
+            className="h-14 px-8 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#b026ff] via-primary to-[#5b148c] hover:from-[#c45eff] hover:via-[#a020f0] hover:to-[#4a0e7a] border border-primary/50 text-white font-bold uppercase tracking-[0.2em] rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.6),inset_0_0_15px_rgba(255,255,255,0.3)] transition-all active:scale-95 flex-shrink-0"
+            disabled={loading || isOracleSpeaking}
           >
             Transmit
           </Button>
